@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Upload, FileText, Award } from 'lucide-react';
 import Button from './Button';
 import FileUpload from './FileUpload';
+import ApiKeyInput from './ApiKeyInput';
 import { cn } from '@/lib/utils';
+import { getApiKey } from '@/services/aiService';
+import { toast } from '@/components/ui/use-toast';
 
 const features = [
   {
@@ -43,9 +46,27 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   
   const handleStartInterview = () => {
-    // In a real app, we would upload the resume and process it
-    // For now, we'll just navigate to the interview page
-    navigate('/interview');
+    // Check if API key is set
+    if (!getApiKey()) {
+      toast({
+        title: "API Key Required",
+        description: "Please provide a DeepSeek API key to start the interview.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Store resume and job role in sessionStorage
+    if (resume) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        sessionStorage.setItem('resume', content);
+        sessionStorage.setItem('jobRole', isCustomRole ? customRole : selectedRole);
+        navigate('/interview');
+      };
+      reader.readAsText(resume);
+    }
   };
   
   const jobRole = isCustomRole ? customRole : selectedRole;
@@ -66,13 +87,16 @@ const LandingPage: React.FC = () => {
         
         {/* Main Card */}
         <div className="glass-card max-w-3xl mx-auto mb-16 animate-fade-in" style={{animationDelay: "100ms"}}>
-          <h2 className="text-2xl font-medium mb-6 text-center">Start Your Practice Interview</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-medium text-center">Start Your Practice Interview</h2>
+            <ApiKeyInput />
+          </div>
           
           <div className="space-y-8">
             <FileUpload
               label="Upload your resume"
               onChange={setResume}
-              accept=".pdf,.doc,.docx"
+              accept=".pdf,.doc,.docx,.txt"
             />
             
             <div>

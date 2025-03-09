@@ -1,22 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, MicOff, Send, Clock, ChevronRight } from 'lucide-react';
+import { Mic, MicOff, Send, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import Button from './Button';
 import { cn } from '@/lib/utils';
-
-// Mock interview questions
-const mockQuestions = [
-  "Tell me about yourself and your background.",
-  "What interests you about this role?",
-  "Describe a challenging project you worked on and how you handled it.",
-  "What are your strengths and weaknesses?",
-  "How do you stay current with industry trends?",
-  "Can you describe your experience with [relevant technology]?",
-  "How do you handle pressure and tight deadlines?",
-  "Where do you see yourself in five years?",
-  "Do you have any questions for me about the role or company?"
-];
+import { generateInterviewQuestions } from '@/services/aiService';
+import { toast } from '@/components/ui/use-toast';
 
 // Mock waiting messages
 const waitingMessages = [
@@ -36,12 +25,61 @@ const InterviewSession: React.FC = () => {
   const [isInterviewComplete, setIsInterviewComplete] = useState(false);
   const [showCodeInput, setShowCodeInput] = useState(false);
   const [codeInput, setCodeInput] = useState("");
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
   const timerRef = useRef<number | null>(null);
   const waitingTimerRef = useRef<number | null>(null);
   const navigate = useNavigate();
   
-  const currentQuestion = mockQuestions[currentQuestionIndex];
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      const resumeContent = sessionStorage.getItem('resume');
+      const jobRole = sessionStorage.getItem('jobRole');
+      
+      if (!resumeContent || !jobRole) {
+        toast({
+          title: "Missing information",
+          description: "Please upload a resume and select a job role first.",
+          variant: "destructive",
+        });
+        navigate('/');
+        return;
+      }
+      
+      try {
+        const generatedQuestions = await generateInterviewQuestions({
+          resume: resumeContent,
+          jobRole: jobRole
+        });
+        
+        setQuestions(generatedQuestions);
+        setAnswers(new Array(generatedQuestions.length).fill(''));
+      } catch (error) {
+        console.error("Failed to generate questions:", error);
+        toast({
+          title: "Error",
+          description: "Failed to generate interview questions. Using default questions instead.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchQuestions();
+    
+    // Clean up timers when component unmounts
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      if (waitingTimerRef.current) {
+        clearTimeout(waitingTimerRef.current);
+      }
+    };
+  }, [navigate]);
   
   // Start/stop recording
   const toggleRecording = () => {
@@ -76,6 +114,15 @@ const InterviewSession: React.FC = () => {
       timerRef.current = null;
     }
     
+    // Save the mock transcript as the answer
+    const mockTranscript = "This is a simulated answer. In a real app, this would be the transcribed speech from the user.";
+    setTranscript(mockTranscript);
+    
+    // Save the answer
+    const updatedAnswers = [...answers];
+    updatedAnswers[currentQuestionIndex] = mockTranscript;
+    setAnswers(updatedAnswers);
+    
     // In a real app, we would stop the microphone and process the recording
     // For now, we'll just simulate waiting for AI processing
     
@@ -86,19 +133,23 @@ const InterviewSession: React.FC = () => {
     waitingTimerRef.current = window.setTimeout(() => {
       setIsWaiting(false);
       
-      // For question #6, show code input
-      if (currentQuestionIndex === 5) {
+      // For the first coding question (can be adjusted based on actual questions)
+      if (currentQuestionIndex === 3 && questions[currentQuestionIndex]?.toLowerCase().includes("code")) {
         setShowCodeInput(true);
       }
       
       // If this was the last question, end the interview
-      if (currentQuestionIndex === mockQuestions.length - 1) {
+      if (currentQuestionIndex === questions.length - 1) {
         setIsInterviewComplete(true);
       }
     }, 2000);
   };
   
   const handleNextQuestion = () => {
+    // Save all information for analysis
+    sessionStorage.setItem('interviewQuestions', JSON.stringify(questions));
+    sessionStorage.setItem('interviewAnswers', JSON.stringify(answers));
+    
     // Move to the next question
     setCurrentQuestionIndex(prev => prev + 1);
     setTranscript("");
@@ -107,25 +158,22 @@ const InterviewSession: React.FC = () => {
   };
   
   const handleSubmitCode = () => {
+    // Save the code answer
+    const updatedAnswers = [...answers];
+    updatedAnswers[currentQuestionIndex] = codeInput;
+    setAnswers(updatedAnswers);
+    
     setShowCodeInput(false);
     // In a real app, we would evaluate the code here
   };
   
   const handleFinishInterview = () => {
+    // Save all information for analysis
+    sessionStorage.setItem('interviewQuestions', JSON.stringify(questions));
+    sessionStorage.setItem('interviewAnswers', JSON.stringify(answers));
+    
     navigate('/feedback');
   };
-  
-  // Clean up timers on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-      if (waitingTimerRef.current) {
-        clearTimeout(waitingTimerRef.current);
-      }
-    };
-  }, []);
   
   // Format timer display
   const formatTime = (seconds: number) => {
@@ -133,6 +181,35 @@ const InterviewSession: React.FC = () => {
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
+  
+  // If still loading questions
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pt-24 pb-16 px-6 flex flex-col items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-lg">Generating interview questions based on your resume...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  // If no questions were generated
+  if (questions.length === 0) {
+    return (
+      <div className="min-h-screen pt-24 pb-16 px-6 flex flex-col items-center justify-center">
+        <div className="glass-card max-w-lg">
+          <h2 className="text-xl font-medium mb-4">Unable to Start Interview</h2>
+          <p className="mb-6">We couldn't generate interview questions. Please check your API key and try again.</p>
+          <Button variant="primary" onClick={() => navigate('/')}>
+            Return to Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  const currentQuestion = questions[currentQuestionIndex];
   
   return (
     <div className="min-h-screen pt-24 pb-16 px-6 flex flex-col">
@@ -143,14 +220,14 @@ const InterviewSession: React.FC = () => {
             <h2 className="text-lg font-medium">Interview Progress</h2>
             <div className="flex items-center text-sm text-muted-foreground">
               <Clock className="h-4 w-4 mr-1" />
-              <span>Question {currentQuestionIndex + 1} of {mockQuestions.length}</span>
+              <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
             </div>
           </div>
           
           <div className="h-2 bg-secondary rounded-full overflow-hidden">
             <div 
               className="h-full bg-primary transition-all duration-500 ease-out"
-              style={{ width: `${((currentQuestionIndex) / mockQuestions.length) * 100}%` }}
+              style={{ width: `${((currentQuestionIndex) / questions.length) * 100}%` }}
             />
           </div>
         </div>
@@ -248,7 +325,7 @@ const InterviewSession: React.FC = () => {
                     )}
                   </div>
                   
-                  {!isRecording && !isWaiting && currentQuestionIndex < mockQuestions.length - 1 && (
+                  {!isRecording && !isWaiting && currentQuestionIndex < questions.length - 1 && (
                     <Button
                       variant="secondary"
                       onClick={handleNextQuestion}
