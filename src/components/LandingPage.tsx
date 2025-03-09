@@ -1,41 +1,29 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Upload, FileText, Award } from 'lucide-react';
+import { ArrowRight, Upload, FileText, Award, Database } from 'lucide-react';
 import Button from './Button';
 import FileUpload from './FileUpload';
-import ApiKeyInput from './ApiKeyInput';
 import { cn } from '@/lib/utils';
-import { getApiKey } from '@/services/aiService';
+import { getApiKey, dataRoles } from '@/services/aiService';
 import { toast } from '@/components/ui/use-toast';
 
 const features = [
   {
+    icon: <Database className="h-6 w-6 text-primary" />,
+    title: "Data Role Interviews",
+    description: "Specialized questions for Data Scientists, Engineers, and Analysts"
+  },
+  {
     icon: <FileText className="h-6 w-6 text-primary" />,
-    title: "AI-Powered Questions",
-    description: "Intelligent questions based on job role and your resume"
+    title: "Resume Analysis",
+    description: "AI generates questions based on your skills and experience"
   },
   {
     icon: <Award className="h-6 w-6 text-primary" />,
     title: "Detailed Feedback",
-    description: "Get personalized insights to improve your performance"
-  },
-  {
-    icon: <Upload className="h-6 w-6 text-primary" />,
-    title: "Practice Anytime",
-    description: "Unlimited practice sessions to boost your confidence"
+    description: "Get personalized insights to improve your data career prospects"
   }
-];
-
-const jobRoles = [
-  "Software Engineer",
-  "Data Scientist",
-  "Product Manager",
-  "UX Designer",
-  "Marketing Specialist",
-  "Sales Representative",
-  "Financial Analyst",
-  "Human Resources"
 ];
 
 const LandingPage: React.FC = () => {
@@ -46,11 +34,11 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   
   const handleStartInterview = () => {
-    // Check if API key is set
+    // Check if API key is available
     if (!getApiKey()) {
       toast({
-        title: "API Key Required",
-        description: "Please provide a DeepSeek API key to start the interview.",
+        title: "System Not Available",
+        description: "The interview system is temporarily unavailable. Please try again later.",
         variant: "destructive",
       });
       return;
@@ -78,18 +66,17 @@ const LandingPage: React.FC = () => {
         {/* Hero Section */}
         <div className="text-center mb-16 animate-fade-in">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
-            Ace Your Next Interview with AI
+            Ace Your Data Interview with AI
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Practice with our AI-powered interview simulator that provides personalized feedback to help you land your dream job.
+            Practice with our AI-powered interview simulator specialized for data roles. Get personalized feedback to help you land your dream data job.
           </p>
         </div>
         
         {/* Main Card */}
         <div className="glass-card max-w-3xl mx-auto mb-16 animate-fade-in" style={{animationDelay: "100ms"}}>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-medium text-center">Start Your Practice Interview</h2>
-            <ApiKeyInput />
+            <h2 className="text-2xl font-medium text-center">Start Your Data Interview Practice</h2>
           </div>
           
           <div className="space-y-8">
@@ -101,11 +88,11 @@ const LandingPage: React.FC = () => {
             
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Select job role
+                Select data role
               </label>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                {jobRoles.map((role) => (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                {dataRoles.map((role) => (
                   <button
                     key={role}
                     className={cn(
@@ -136,7 +123,7 @@ const LandingPage: React.FC = () => {
                   htmlFor="custom-role"
                   className="ml-2 block text-sm"
                 >
-                  Custom job role
+                  Other data role (specify)
                 </label>
               </div>
               
@@ -145,7 +132,7 @@ const LandingPage: React.FC = () => {
                   type="text"
                   value={customRole}
                   onChange={(e) => setCustomRole(e.target.value)}
-                  placeholder="Enter job role (e.g., Frontend Developer)"
+                  placeholder="Enter specific data role (e.g., NLP Engineer)"
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 />
               )}
@@ -158,7 +145,7 @@ const LandingPage: React.FC = () => {
               onClick={handleStartInterview}
               disabled={!isReadyToStart}
             >
-              Start Interview
+              Start Data Interview
             </Button>
           </div>
         </div>

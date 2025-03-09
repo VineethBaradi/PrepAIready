@@ -1,18 +1,19 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, MicOff, Send, Clock, ChevronRight, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Send, Clock, ChevronRight, Loader2, BarChart } from 'lucide-react';
 import Button from './Button';
 import { cn } from '@/lib/utils';
-import { generateInterviewQuestions } from '@/services/aiService';
+import { generateInterviewQuestions, evaluateAnswer } from '@/services/aiService';
 import { toast } from '@/components/ui/use-toast';
 
-// Mock waiting messages
+// Improved waiting messages for data interviews
 const waitingMessages = [
-  "Analyzing your response...",
-  "Processing your answer...",
-  "Evaluating your response...",
-  "Preparing next question..."
+  "Analyzing your response with data expertise...",
+  "Evaluating your data knowledge...",
+  "Processing your technical answer...",
+  "Assessing your approach to data problems...",
+  "Analyzing your methodology..."
 ];
 
 const InterviewSession: React.FC = () => {
@@ -27,6 +28,7 @@ const InterviewSession: React.FC = () => {
   const [codeInput, setCodeInput] = useState("");
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
+  const [evaluations, setEvaluations] = useState<Array<{score: number; feedback: string}>>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const timerRef = useRef<number | null>(null);
@@ -41,7 +43,7 @@ const InterviewSession: React.FC = () => {
       if (!resumeContent || !jobRole) {
         toast({
           title: "Missing information",
-          description: "Please upload a resume and select a job role first.",
+          description: "Please upload a resume and select a data role first.",
           variant: "destructive",
         });
         navigate('/');
@@ -51,16 +53,18 @@ const InterviewSession: React.FC = () => {
       try {
         const generatedQuestions = await generateInterviewQuestions({
           resume: resumeContent,
-          jobRole: jobRole
+          jobRole: jobRole,
+          count: 8 // You can adjust the number of questions
         });
         
         setQuestions(generatedQuestions);
         setAnswers(new Array(generatedQuestions.length).fill(''));
+        setEvaluations(new Array(generatedQuestions.length).fill({ score: 0, feedback: '' }));
       } catch (error) {
         console.error("Failed to generate questions:", error);
         toast({
           title: "Error",
-          description: "Failed to generate interview questions. Using default questions instead.",
+          description: "Failed to generate interview questions. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -105,6 +109,45 @@ const InterviewSession: React.FC = () => {
       setTimer(prev => prev + 1);
     }, 1000);
   };
+
+  const processAnswer = async (answer: string) => {
+    // Save the answer
+    const updatedAnswers = [...answers];
+    updatedAnswers[currentQuestionIndex] = answer;
+    setAnswers(updatedAnswers);
+    
+    // Get the current job role
+    const jobRole = sessionStorage.getItem('jobRole') || 'Data Analyst';
+    
+    // Evaluate the answer
+    try {
+      const result = await evaluateAnswer(
+        questions[currentQuestionIndex],
+        answer,
+        jobRole
+      );
+      
+      // Save the evaluation
+      const updatedEvaluations = [...evaluations];
+      updatedEvaluations[currentQuestionIndex] = result;
+      setEvaluations(updatedEvaluations);
+      
+      // For coding questions, show code input instead
+      if (questions[currentQuestionIndex]?.toLowerCase().includes("code") || 
+          questions[currentQuestionIndex]?.toLowerCase().includes("sql") ||
+          questions[currentQuestionIndex]?.toLowerCase().includes("python")) {
+        setShowCodeInput(true);
+      }
+      
+      // If this was the last question, end the interview
+      if (currentQuestionIndex === questions.length - 1) {
+        setIsInterviewComplete(true);
+      }
+      
+    } catch (error) {
+      console.error("Error evaluating answer:", error);
+    }
+  };
   
   const stopRecording = () => {
     setIsRecording(false);
@@ -114,34 +157,32 @@ const InterviewSession: React.FC = () => {
       timerRef.current = null;
     }
     
-    // Save the mock transcript as the answer
-    const mockTranscript = "This is a simulated answer. In a real app, this would be the transcribed speech from the user.";
-    setTranscript(mockTranscript);
+    // Generate a simulated answer based on the question for our demo
+    // In a real app this would be the transcribed speech
+    let simulatedAnswer = "";
+    const currentQuestion = questions[currentQuestionIndex];
     
-    // Save the answer
-    const updatedAnswers = [...answers];
-    updatedAnswers[currentQuestionIndex] = mockTranscript;
-    setAnswers(updatedAnswers);
+    // Generate topic-specific simulated answers for demo purposes
+    if (currentQuestion.toLowerCase().includes('sql')) {
+      simulatedAnswer = "I have experience with complex SQL queries including joins, subqueries, and window functions. For example, in my last project, I used CTEs to analyze customer behavior patterns across multiple transaction tables.";
+    } else if (currentQuestion.toLowerCase().includes('python')) {
+      simulatedAnswer = "I've used Python extensively for data analysis with pandas and numpy. I'm comfortable with data cleaning, transformation, and visualization using libraries like matplotlib and seaborn.";
+    } else if (currentQuestion.toLowerCase().includes('machine learning')) {
+      simulatedAnswer = "I've implemented various ML models including random forests, gradient boosting, and neural networks. I follow a structured approach from data preprocessing to model evaluation using metrics appropriate for each problem type.";
+    } else {
+      simulatedAnswer = "I approach this type of problem by first understanding the business requirements, then exploring the data to identify patterns and outliers. After that, I develop a solution strategy and validate it against test cases.";
+    }
     
-    // In a real app, we would stop the microphone and process the recording
-    // For now, we'll just simulate waiting for AI processing
+    setTranscript(simulatedAnswer);
     
+    // Evaluate the answer
     setIsWaiting(true);
     setWaitingMessage(waitingMessages[Math.floor(Math.random() * waitingMessages.length)]);
     
     // Simulate AI processing time
     waitingTimerRef.current = window.setTimeout(() => {
       setIsWaiting(false);
-      
-      // For the first coding question (can be adjusted based on actual questions)
-      if (currentQuestionIndex === 3 && questions[currentQuestionIndex]?.toLowerCase().includes("code")) {
-        setShowCodeInput(true);
-      }
-      
-      // If this was the last question, end the interview
-      if (currentQuestionIndex === questions.length - 1) {
-        setIsInterviewComplete(true);
-      }
+      processAnswer(simulatedAnswer);
     }, 2000);
   };
   
@@ -149,6 +190,7 @@ const InterviewSession: React.FC = () => {
     // Save all information for analysis
     sessionStorage.setItem('interviewQuestions', JSON.stringify(questions));
     sessionStorage.setItem('interviewAnswers', JSON.stringify(answers));
+    sessionStorage.setItem('interviewEvaluations', JSON.stringify(evaluations));
     
     // Move to the next question
     setCurrentQuestionIndex(prev => prev + 1);
@@ -158,19 +200,16 @@ const InterviewSession: React.FC = () => {
   };
   
   const handleSubmitCode = () => {
-    // Save the code answer
-    const updatedAnswers = [...answers];
-    updatedAnswers[currentQuestionIndex] = codeInput;
-    setAnswers(updatedAnswers);
-    
+    // Process the code answer
+    processAnswer(codeInput);
     setShowCodeInput(false);
-    // In a real app, we would evaluate the code here
   };
   
   const handleFinishInterview = () => {
     // Save all information for analysis
     sessionStorage.setItem('interviewQuestions', JSON.stringify(questions));
     sessionStorage.setItem('interviewAnswers', JSON.stringify(answers));
+    sessionStorage.setItem('interviewEvaluations', JSON.stringify(evaluations));
     
     navigate('/feedback');
   };
@@ -188,7 +227,7 @@ const InterviewSession: React.FC = () => {
       <div className="min-h-screen pt-24 pb-16 px-6 flex flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-lg">Generating interview questions based on your resume...</p>
+          <p className="text-lg">Generating data interview questions based on your resume...</p>
         </div>
       </div>
     );
@@ -200,7 +239,7 @@ const InterviewSession: React.FC = () => {
       <div className="min-h-screen pt-24 pb-16 px-6 flex flex-col items-center justify-center">
         <div className="glass-card max-w-lg">
           <h2 className="text-xl font-medium mb-4">Unable to Start Interview</h2>
-          <p className="mb-6">We couldn't generate interview questions. Please check your API key and try again.</p>
+          <p className="mb-6">We couldn't generate interview questions. Please try again later.</p>
           <Button variant="primary" onClick={() => navigate('/')}>
             Return to Home
           </Button>
@@ -210,6 +249,7 @@ const InterviewSession: React.FC = () => {
   }
   
   const currentQuestion = questions[currentQuestionIndex];
+  const currentEvaluation = evaluations[currentQuestionIndex];
   
   return (
     <div className="min-h-screen pt-24 pb-16 px-6 flex flex-col">
@@ -217,7 +257,7 @@ const InterviewSession: React.FC = () => {
         {/* Interview progress */}
         <div className="mb-8 animate-slide-down">
           <div className="flex justify-between items-center mb-3">
-            <h2 className="text-lg font-medium">Interview Progress</h2>
+            <h2 className="text-lg font-medium">Data Interview Progress</h2>
             <div className="flex items-center text-sm text-muted-foreground">
               <Clock className="h-4 w-4 mr-1" />
               <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
@@ -248,7 +288,7 @@ const InterviewSession: React.FC = () => {
               <div className="flex-1 flex flex-col items-center justify-center animate-fade-in">
                 <h3 className="text-xl font-medium mb-3">Interview Complete!</h3>
                 <p className="text-muted-foreground mb-6 text-center max-w-md">
-                  Thanks for completing the interview. Click below to see your feedback and performance analysis.
+                  Thanks for completing the data interview. Click below to see your detailed technical feedback and performance analysis.
                 </p>
                 <Button variant="primary" onClick={handleFinishInterview}>
                   View Your Feedback
@@ -261,7 +301,7 @@ const InterviewSession: React.FC = () => {
                   value={codeInput}
                   onChange={(e) => setCodeInput(e.target.value)}
                   className="flex-1 p-4 border rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
-                  placeholder="// Write your code here..."
+                  placeholder="# Write your SQL query or Python code here..."
                 />
                 <div className="flex justify-end mt-4">
                   <Button 
@@ -291,11 +331,28 @@ const InterviewSession: React.FC = () => {
                       </div>
                     </div>
                   ) : transcript ? (
-                    <p>{transcript}</p>
+                    <div>
+                      <p>{transcript}</p>
+                      
+                      {currentEvaluation.score > 0 && (
+                        <div className="mt-4 p-3 bg-secondary/30 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center">
+                              <BarChart className="h-4 w-4 mr-2 text-primary" />
+                              <span className="text-sm font-medium">Response Evaluation</span>
+                            </div>
+                            <div className="px-2 py-1 bg-primary/10 rounded text-sm font-medium">
+                              Score: {currentEvaluation.score}/10
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{currentEvaluation.feedback}</p>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <p className="text-muted-foreground text-center my-8">
                       {isRecording 
-                        ? "Listening... Speak your answer" 
+                        ? "Listening... Speak your answer to the data question" 
                         : "Click the microphone button to start answering"
                       }
                     </p>
@@ -325,7 +382,7 @@ const InterviewSession: React.FC = () => {
                     )}
                   </div>
                   
-                  {!isRecording && !isWaiting && currentQuestionIndex < questions.length - 1 && (
+                  {!isRecording && !isWaiting && transcript && currentQuestionIndex < questions.length - 1 && (
                     <Button
                       variant="secondary"
                       onClick={handleNextQuestion}
