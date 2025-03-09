@@ -1,4 +1,3 @@
-
 import { toast } from "@/components/ui/use-toast";
 
 // DeepSeek API base URL
@@ -127,11 +126,21 @@ export const generateInterviewQuestions = async (
         messages: [
           {
             role: "system",
-            content: `You are an expert technical interviewer for the data domain. You specialize in interviewing candidates for roles like Data Analysts, Data Engineers, Data Scientists, ML Engineers, and AI Engineers. Your task is to generate relevant technical and behavioral interview questions based on a resume and job role.`
+            content: `Act as a Technical Interviewer for data roles. Your goal is to gauge the candidate's fit for a ${jobRole} role by asking technical (70%), coding (20%), and behavioral/situational (10%) questions. You'll provide blunt, concise feedback at the end.
+
+Steps to Follow:
+1. Analyze the Resume and Job Description:
+   - Identify key technical skills (e.g., SQL, Python, ETL tools), experience, and gaps.
+   - Note the job requirements relevant to ${jobRole} (e.g., cloud platforms, data pipelines, visualization tools).
+
+2. Create Questions:
+   - Technical (70%): Ask about tools/skills listed in the resume and job description.
+   - Coding (20%): Ask coding-related questions to test hands-on skills in Python, SQL, or other relevant languages/tools.
+   - Others (10%): Ask behavioral, teamwork, problem-solving, and motivation questions.`
           },
           {
             role: "user",
-            content: `Generate ${count} interview questions for a ${jobRole} position based on this resume:\n\n${resume}\n\nCreate a mix of technical questions specific to ${jobRole} (SQL, Python, statistics, data modeling, machine learning concepts as relevant) and behavioral questions. Focus on assessing both technical skills and soft skills necessary for data professionals. Format your response as a JSON array of strings, with each string being a question.`
+            content: `Generate ${count} interview questions for a ${jobRole} position based on this resume:\n\n${resume}\n\nCreate a mix of questions following this distribution: 70% technical questions specific to ${jobRole} (including SQL, Python, statistics, data modeling, machine learning concepts as relevant), 20% coding questions that require demonstrating code writing skills, and 10% behavioral questions. Format your response as a JSON array of strings, with each string being a question.`
           }
         ],
         temperature: 0.7,

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Mic, MicOff, Send, Clock, ChevronRight, Loader2, BarChart } from 'lucide-react';
+import { Mic, MicOff, Send, Clock, ChevronRight, Loader2, BarChart, Volume2, VolumeX } from 'lucide-react';
 import Button from './Button';
 import { cn } from '@/lib/utils';
 import { generateInterviewQuestions, evaluateAnswer } from '@/services/aiService';
@@ -31,9 +31,12 @@ const InterviewSession: React.FC = () => {
   const [evaluations, setEvaluations] = useState<Array<{score: number; feedback: string}>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [usingFallbackQuestions, setUsingFallbackQuestions] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
   
   const timerRef = useRef<number | null>(null);
   const waitingTimerRef = useRef<number | null>(null);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -89,8 +92,60 @@ const InterviewSession: React.FC = () => {
       if (waitingTimerRef.current) {
         clearTimeout(waitingTimerRef.current);
       }
+      stopSpeech();
     };
   }, [navigate]);
+  
+  // Read the current question aloud
+  useEffect(() => {
+    if (!isLoading && questions.length > 0 && !isMuted) {
+      readQuestionAloud(questions[currentQuestionIndex]);
+    }
+  }, [currentQuestionIndex, questions, isLoading, isMuted]);
+  
+  const readQuestionAloud = (text: string) => {
+    if (isMuted) return;
+    
+    // Cancel any ongoing speech
+    stopSpeech();
+    
+    // Create a new speech utterance
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    
+    // Store the utterance in the ref so we can cancel it later if needed
+    speechSynthesisRef.current = utterance;
+    
+    // Set speaking state
+    setIsSpeaking(true);
+    
+    // Add event listener for when speech ends
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      speechSynthesisRef.current = null;
+    };
+    
+    // Speak
+    window.speechSynthesis.speak(utterance);
+  };
+  
+  const stopSpeech = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    speechSynthesisRef.current = null;
+  };
+  
+  const toggleMute = () => {
+    const newMuteState = !isMuted;
+    setIsMuted(newMuteState);
+    
+    if (newMuteState) {
+      stopSpeech();
+    } else if (questions.length > 0) {
+      readQuestionAloud(questions[currentQuestionIndex]);
+    }
+  };
   
   // Start/stop recording
   const toggleRecording = () => {
@@ -104,6 +159,9 @@ const InterviewSession: React.FC = () => {
   const startRecording = () => {
     setIsRecording(true);
     setTimer(0);
+    
+    // Stop any ongoing speech when recording starts
+    stopSpeech();
     
     // In a real app, we would start the microphone recording here
     // For now, we'll just update the UI and start a timer
@@ -298,9 +356,36 @@ const InterviewSession: React.FC = () => {
         <div className="flex-1 flex flex-col glass-card">
           {/* AI question */}
           <div className="mb-6 animate-fade-in">
-            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-sm font-medium text-primary mb-1">Interviewer Question:</p>
+            <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 relative">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-sm font-medium text-primary">Interviewer Question:</p>
+                <button 
+                  onClick={toggleMute} 
+                  className="p-1 rounded-full hover:bg-gray-200/50 transition-colors"
+                  aria-label={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? (
+                    <VolumeX className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Volume2 className={cn(
+                      "h-4 w-4", 
+                      isSpeaking ? "text-primary animate-pulse" : "text-muted-foreground"
+                    )} />
+                  )}
+                </button>
+              </div>
               <p className="text-lg">{currentQuestion}</p>
+              {isSpeaking && !isMuted && (
+                <div className="flex justify-center mt-2">
+                  <div className="flex gap-1 items-center">
+                    <span className="w-1 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-1 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-1 h-4 bg-primary rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                    <span className="w-1 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: "450ms" }}></span>
+                    <span className="w-1 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: "600ms" }}></span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
