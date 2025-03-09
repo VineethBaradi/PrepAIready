@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, Award, Check, AlertTriangle, BarChart4, LineChart } from 'lucide-react';
@@ -51,7 +50,6 @@ const FeedbackPage: React.FC = () => {
         
         setFeedback(result);
         
-        // Extract overall score if present
         const scoreMatch = result.match(/overall score:?\s*([0-9]+)/i);
         if (scoreMatch && scoreMatch[1]) {
           setOverallScore(parseInt(scoreMatch[1], 10));
@@ -82,18 +80,14 @@ const FeedbackPage: React.FC = () => {
     );
   }
   
-  // Calculate average question score
   const averageScore = evaluations.length > 0 
-    ? evaluations.reduce((sum, eval) => sum + eval.score, 0) / evaluations.length
+    ? evaluations.reduce((sum, evaluation) => sum + evaluation.score, 0) / evaluations.length
     : 0;
   
-  // Render feedback with proper formatting
   const renderFeedback = () => {
     if (!feedback) return null;
     
-    // Split the feedback into sections and paragraphs
     return feedback.split('\n\n').map((paragraph, index) => {
-      // Check if this paragraph is a heading
       const isHeading = paragraph.startsWith('#') || 
                         (/^[A-Z][\w\s]+:$/.test(paragraph)) || 
                         paragraph.length < 50 && paragraph.toUpperCase() === paragraph;
@@ -144,7 +138,6 @@ const FeedbackPage: React.FC = () => {
             )}
           </div>
           
-          {/* Question Performance Summary */}
           {evaluations.length > 0 && (
             <div className="mb-8 p-4 bg-secondary/20 rounded-lg">
               <div className="flex items-center gap-2 mb-3">
