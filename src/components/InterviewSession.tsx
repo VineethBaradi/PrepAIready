@@ -34,6 +34,10 @@ const InterviewSession: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   
+  // Add new state for speech recognition
+  const [recognitionActive, setRecognitionActive] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  
   const timerRef = useRef<number | null>(null);
   const waitingTimerRef = useRef<number | null>(null);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -84,6 +88,41 @@ const InterviewSession: React.FC = () => {
     
     fetchQuestions();
     
+    // Initialize speech recognition if available
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      
+      recognitionRef.current.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript + ' ';
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+        
+        setTranscript(prev => finalTranscript || interimTranscript || prev);
+      };
+      
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+      };
+    } else {
+      console.warn('Speech recognition not supported in this browser');
+      toast({
+        title: "Limited functionality",
+        description: "Speech-to-text is not supported in your browser. Using simulated responses.",
+        variant: "default",
+      });
+    }
+    
     // Clean up timers when component unmounts
     return () => {
       if (timerRef.current) {
@@ -93,6 +132,7 @@ const InterviewSession: React.FC = () => {
         clearTimeout(waitingTimerRef.current);
       }
       stopSpeech();
+      stopRecognition();
     };
   }, [navigate]);
   
@@ -147,6 +187,30 @@ const InterviewSession: React.FC = () => {
     }
   };
   
+  // Start speech recognition
+  const startRecognition = () => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.start();
+        setRecognitionActive(true);
+      } catch (error) {
+        console.error('Failed to start speech recognition:', error);
+      }
+    }
+  };
+  
+  // Stop speech recognition
+  const stopRecognition = () => {
+    if (recognitionRef.current && recognitionActive) {
+      try {
+        recognitionRef.current.stop();
+        setRecognitionActive(false);
+      } catch (error) {
+        console.error('Failed to stop speech recognition:', error);
+      }
+    }
+  };
+  
   // Start/stop recording
   const toggleRecording = () => {
     if (isRecording) {
@@ -159,12 +223,13 @@ const InterviewSession: React.FC = () => {
   const startRecording = () => {
     setIsRecording(true);
     setTimer(0);
+    setTranscript(""); // Clear previous transcript
     
     // Stop any ongoing speech when recording starts
     stopSpeech();
     
-    // In a real app, we would start the microphone recording here
-    // For now, we'll just update the UI and start a timer
+    // Start speech recognition
+    startRecognition();
     
     if (timerRef.current) {
       clearInterval(timerRef.current);
@@ -224,37 +289,34 @@ const InterviewSession: React.FC = () => {
   const stopRecording = () => {
     setIsRecording(false);
     
+    // Stop the speech recognition
+    stopRecognition();
+    
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
     
-    // Generate a simulated answer based on the question for our demo
-    // In a real app this would be the transcribed speech
-    let simulatedAnswer = "";
-    const currentQuestion = questions[currentQuestionIndex];
+    // Use the transcribed text instead of a simulated answer
+    const userAnswer = transcript.trim();
     
-    // Generate topic-specific simulated answers for demo purposes
-    if (currentQuestion.toLowerCase().includes('sql')) {
-      simulatedAnswer = "I have experience with complex SQL queries including joins, subqueries, and window functions. For example, in my last project, I used CTEs to analyze customer behavior patterns across multiple transaction tables.";
-    } else if (currentQuestion.toLowerCase().includes('python')) {
-      simulatedAnswer = "I've used Python extensively for data analysis with pandas and numpy. I'm comfortable with data cleaning, transformation, and visualization using libraries like matplotlib and seaborn.";
-    } else if (currentQuestion.toLowerCase().includes('machine learning')) {
-      simulatedAnswer = "I've implemented various ML models including random forests, gradient boosting, and neural networks. I follow a structured approach from data preprocessing to model evaluation using metrics appropriate for each problem type.";
-    } else {
-      simulatedAnswer = "I approach this type of problem by first understanding the business requirements, then exploring the data to identify patterns and outliers. After that, I develop a solution strategy and validate it against test cases.";
+    if (!userAnswer) {
+      toast({
+        title: "No speech detected",
+        description: "We couldn't detect your answer. Please try again.",
+        variant: "destructive",
+      });
+      return;
     }
-    
-    setTranscript(simulatedAnswer);
     
     // Evaluate the answer
     setIsWaiting(true);
     setWaitingMessage(waitingMessages[Math.floor(Math.random() * waitingMessages.length)]);
     
-    // Simulate AI processing time
+    // Process the user's actual answer
     waitingTimerRef.current = window.setTimeout(() => {
       setIsWaiting(false);
-      processAnswer(simulatedAnswer);
+      processAnswer(userAnswer);
     }, 2000);
   };
   
