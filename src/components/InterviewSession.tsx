@@ -97,7 +97,7 @@ const InterviewSession: React.FC = () => {
   
   useEffect(() => {
     if (!isLoading && questions.length > 0 && !isMuted) {
-      if (readAloud && readAloud instanceof Function) {
+      if (readAloud) {
         readAloud(questions[currentQuestionIndex]);
       }
     }
@@ -106,7 +106,7 @@ const InterviewSession: React.FC = () => {
   const handleToggleMute = () => {
     const newMuteState = toggleMute();
     
-    if (!newMuteState && questions.length > 0) {
+    if (!newMuteState && questions.length > 0 && readAloud) {
       readAloud(questions[currentQuestionIndex]);
     }
   };
