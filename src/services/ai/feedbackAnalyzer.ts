@@ -27,7 +27,9 @@ export const analyzeInterviewResponses = async (
         messages: [
           {
             role: "system",
-            content: `You are an expert data interviewer and analyst specializing in roles like Data Scientists, Data Engineers, and ML Engineers. Your task is to provide constructive feedback on technical interviews for data professionals.`
+            content: `You are an expert data interviewer and analyst specializing in roles like Data Scientists, Data Engineers, and ML Engineers. Your task is to provide constructive feedback on technical interviews for data professionals.
+            
+Format your feedback in clear sections with headings and bullet points where appropriate. Be specific with strengths and areas for improvement. The feedback should be balanced, professional, and tailored to the candidate's actual responses.`
           },
           {
             role: "user",
@@ -48,7 +50,7 @@ Provide a detailed feedback analysis covering:
 7. Technical skills they should develop further for this role
 8. Overall score on a scale of 1-100
 
-Format the response as constructive professional feedback that would help the candidate improve their data skills and interview performance.`
+Format the response as constructive professional feedback that would help the candidate improve their data skills and interview performance. Use specific examples from their answers when possible. The feedback should reflect their actual performance, not generic advice.`
           }
         ],
         temperature: 0.7,
@@ -81,90 +83,155 @@ Format the response as constructive professional feedback that would help the ca
 };
 
 // Helper function to generate simulated feedback
-function getSimulatedFeedback(questions: string[], answers: string[], jobRole: string): string {
-  // Calculate a realistic score
-  const score = Math.floor(Math.random() * 20) + 70; // Between 70-90
+function getSimulatedFeedback(questions: string[], answers: string[]): string {
+  // Calculate score based on answer content and length
+  let totalScore = 0;
+  let technicalScore = 0;
+  let communicationScore = 0;
+  let problemSolvingScore = 0;
   
-  // Count how many answers mention important skills
-  const mentionSQL = answers.filter(a => a.toLowerCase().includes("sql")).length;
-  const mentionPython = answers.filter(a => a.toLowerCase().includes("python")).length;
-  const mentionAnalysis = answers.filter(a => a.toLowerCase().includes("analysis")).length;
-  const mentionVisualization = answers.filter(a => a.toLowerCase().includes("visualization")).length;
-  
-  // Role-specific templates
-  let roleSpecificFeedback = "";
-  
-  if (jobRole.toLowerCase().includes("analyst")) {
-    roleSpecificFeedback = `
-## Data Analysis Skills
-
-Your interview responses demonstrate a solid foundation in data analysis methodology. You've shown understanding of how to approach data exploration and derive insights. To further strengthen this area, consider deepening your knowledge of statistical analysis techniques and hypothesis testing.
-
-## SQL Proficiency
-
-Your SQL knowledge appears to be ${mentionSQL > 1 ? "strong" : "adequate"}. ${mentionSQL > 1 ? "You demonstrated familiarity with joins, aggregations, and complex queries." : "Consider practicing more complex queries involving window functions, CTEs, and performance optimization."} For a Data Analyst role, advanced SQL is often a daily requirement.
-
-## Visualization and Communication
-
-${mentionVisualization > 0 ? "Your discussion of data visualization shows good awareness of its importance." : "You could have emphasized data visualization techniques more in your responses."} Effective communication of findings is crucial for a Data Analyst. Consider developing a portfolio showcasing your visualization skills using tools like Tableau, Power BI, or Python libraries.`;
-  } else if (jobRole.toLowerCase().includes("engineer")) {
-    roleSpecificFeedback = `
-## Data Pipeline Design
-
-Your interview responses show ${mentionSQL > 1 ? "strong" : "some"} understanding of data engineering principles. You mentioned experience with ${mentionSQL > 1 ? "SQL and database systems" : "some data technologies"}, which is good. To excel as a Data Engineer, deepen your knowledge of distributed systems, stream processing, and modern data architecture patterns.
-
-## Technical Skills Assessment
-
-Your technical foundation appears ${mentionPython > 1 ? "solid" : "adequate"}, particularly in ${mentionPython > 1 ? "Python and programming concepts" : "basic coding principles"}. For a Data Engineer role, consider strengthening your skills in cloud platforms (AWS/Azure/GCP), container orchestration, and infrastructure as code.
-
-## Data Modeling and Architecture
-
-Your responses could have more thoroughly addressed data modeling concepts and schema design. Data Engineers need strong skills in designing efficient, scalable data models that support both operational and analytical workloads.`;
-  } else {
-    roleSpecificFeedback = `
-## Technical Data Skills
-
-Your interview responses demonstrate a foundation in data concepts and methodologies. You've shown understanding of ${mentionSQL > 0 ? "SQL and " : ""}${mentionPython > 0 ? "Python programming and " : ""}${mentionAnalysis > 0 ? "data analysis approaches" : "technical principles"}. For a ${jobRole} role, continue developing depth in these technical areas.
-
-## Problem-Solving Approach
-
-Your approach to data problems appears methodical. You've described steps for tackling challenges in a structured way. To further enhance this skill, practice breaking down complex data scenarios into manageable components and identifying potential bottlenecks before implementation.
-
-## Communication Skills
-
-Your ability to articulate technical concepts came across ${mentionAnalysis > 2 ? "clearly" : "adequately"} in your answers. In data roles, the ability to translate technical findings into business insights is crucial. Continue practicing explanations of complex topics for non-technical audiences.`;
+  // Check for key indicators of good answers
+  for (let i = 0; i < answers.length; i++) {
+    const answer = answers[i]?.toLowerCase() || "";
+    const question = questions[i]?.toLowerCase() || "";
+    
+    // Skip empty answers
+    if (!answer) continue;
+    
+    // Base score for answering
+    let answerScore = 60;
+    
+    // Length and detail
+    if (answer.length > 100) answerScore += 5;
+    if (answer.length > 200) answerScore += 10;
+    
+    // Technical terms
+    const technicalTerms = [
+      "sql", "python", "spark", "hadoop", "aws", "azure", 
+      "algorithm", "model", "pipeline", "database", "schema", 
+      "query", "optimization", "analysis", "visualization", 
+      "join", "index", "cluster", "partition", "regression",
+      "classification", "etl", "data lake", "data warehouse"
+    ];
+    
+    let termCount = 0;
+    technicalTerms.forEach(term => {
+      if (answer.includes(term)) termCount++;
+    });
+    
+    answerScore += Math.min(termCount * 3, 15);
+    
+    // Structure and coherence
+    if (answer.includes("first") && (answer.includes("then") || answer.includes("second") || answer.includes("next") || answer.includes("finally"))) {
+      answerScore += 5;
+    }
+    
+    // Examples
+    if (answer.includes("example") || answer.includes("instance") || answer.includes("case")) {
+      answerScore += 5;
+    }
+    
+    // SQL specifics
+    if (question.includes("sql") && answer.includes("select") && answer.includes("from")) {
+      answerScore += 10;
+    }
+    
+    // Python specifics
+    if (question.includes("python") && (answer.includes("def") || answer.includes("import") || answer.includes("for") || answer.includes("if"))) {
+      answerScore += 10;
+    }
+    
+    // Problem-solving approach
+    if ((answer.includes("approach") || answer.includes("solution") || answer.includes("solve")) && 
+        (answer.includes("step") || answer.includes("process"))) {
+      problemSolvingScore += 10;
+    }
+    
+    // Cap the score
+    answerScore = Math.min(answerScore, 95);
+    totalScore += answerScore;
+    
+    // Add to category scores
+    if (question.includes("sql") || question.includes("python") || question.includes("technical") || 
+        question.includes("data") || question.includes("algorithm") || question.includes("model")) {
+      technicalScore += answerScore;
+    }
+    
+    communicationScore += answer.length > 50 ? 70 : 50;
+    communicationScore += answer.includes("explain") || answer.includes("clarify") || answer.includes("communicate") ? 10 : 0;
   }
   
-  // Combine all sections
+  // Calculate final score
+  const answeredQuestions = answers.filter(a => a && a.length > 0).length;
+  const overallScore = answeredQuestions > 0 ? Math.round(totalScore / answeredQuestions) : 60;
+  
+  // Normalized category scores
+  const normalizedTechnicalScore = answeredQuestions > 0 ? Math.round(technicalScore / answeredQuestions) : 65;
+  const normalizedCommunicationScore = answeredQuestions > 0 ? Math.min(90, Math.round(communicationScore / answeredQuestions)) : 70;
+  const normalizedProblemSolvingScore = answeredQuestions > 0 ? Math.min(90, 60 + (problemSolvingScore / answeredQuestions)) : 65;
+  
+  // Determine strengths and areas for improvement
+  const strengths = [];
+  const improvements = [];
+  
+  if (normalizedTechnicalScore > 75) strengths.push("Strong technical knowledge in data concepts and methodologies");
+  else improvements.push("Deepen technical expertise in core data tools and technologies");
+  
+  if (normalizedCommunicationScore > 75) strengths.push("Clear and structured communication of technical concepts");
+  else improvements.push("Enhance ability to explain complex data concepts in a clear, concise manner");
+  
+  if (normalizedProblemSolvingScore > 75) strengths.push("Effective problem-solving approach to data challenges");
+  else improvements.push("Develop a more structured approach to solving data problems");
+  
+  if (answeredQuestions < questions.length * 0.8) {
+    improvements.push("Work on addressing all aspects of technical questions thoroughly");
+  }
+  
+  // Add some specific strengths based on keywords
+  let allAnswers = answers.join(" ").toLowerCase();
+  if (allAnswers.includes("sql") && allAnswers.includes("join")) {
+    strengths.push("Demonstrated knowledge of SQL query capabilities");
+  }
+  
+  if (allAnswers.includes("python") && (allAnswers.includes("pandas") || allAnswers.includes("numpy"))) {
+    strengths.push("Familiar with Python data processing libraries");
+  }
+  
+  // Create the feedback
   return `# Interview Performance Assessment
 
 ## Overall Evaluation
 
-Thank you for completing your ${jobRole} interview simulation. Based on your responses, you've demonstrated several strengths along with areas for potential growth. Your overall performance indicates someone with fundamental data skills who is developing proficiency in key areas required for this role.
+Based on your responses to the interview questions, you've demonstrated ${overallScore > 80 ? "strong" : overallScore > 70 ? "good" : "basic"} proficiency in skills required for a data role. Your answers reflect ${overallScore > 80 ? "in-depth knowledge" : overallScore > 70 ? "solid understanding" : "foundational knowledge"} of data concepts and methodologies.
 
-${roleSpecificFeedback}
+## Technical Skills Assessment
+
+Your technical proficiency is ${normalizedTechnicalScore > 80 ? "exemplary" : normalizedTechnicalScore > 70 ? "solid" : "developing"}. The answers demonstrate ${normalizedTechnicalScore > 80 ? "comprehensive knowledge" : normalizedTechnicalScore > 70 ? "good understanding" : "basic familiarity"} with data tools and technologies. ${normalizedTechnicalScore > 75 ? "Your explanations of technical concepts were clear and well-structured." : "Further depth in technical explanations would strengthen your responses."}
+
+## Communication of Data Concepts
+
+Your ability to articulate complex data concepts is ${normalizedCommunicationScore > 80 ? "excellent" : normalizedCommunicationScore > 70 ? "good" : "adequate"}. ${normalizedCommunicationScore > 75 ? "You explained technical ideas in a clear, accessible manner." : "Working on more concise and structured explanations would enhance your communication."}
+
+## Problem-Solving Approach
+
+Your approach to problem-solving in data scenarios is ${normalizedProblemSolvingScore > 80 ? "methodical and effective" : normalizedProblemSolvingScore > 70 ? "logical" : "developing"}. ${normalizedProblemSolvingScore > 75 ? "You demonstrated systematic thinking when tackling complex questions." : "Developing a more structured methodology when approaching problems would be beneficial."}
 
 ## Strengths
 
-1. You demonstrated knowledge of fundamental data concepts
-2. Your communication style was clear and structured
-3. You showed problem-solving capabilities when addressing technical questions
+${strengths.map(s => `- ${s}`).join("\n")}
 
 ## Areas for Improvement
 
-1. Deepen technical expertise in specialized tools relevant to ${jobRole} roles
-2. Provide more specific examples from projects or work experience
-3. Strengthen answers with quantitative results and business impact
-4. Develop more comprehensive responses to situational questions
+${improvements.map(i => `- ${i}`).join("\n")}
 
 ## Recommended Next Steps
 
-1. Build a portfolio project demonstrating end-to-end data skills
-2. Practice more technical interview questions, especially focusing on algorithms and data structures
-3. Strengthen knowledge of modern data tools and cloud technologies
-4. Prepare specific examples from your experience that highlight impact
+1. ${overallScore > 80 ? "Further specialize in advanced techniques within your strongest areas" : "Focus on strengthening core technical skills through hands-on projects"}
+2. ${normalizedCommunicationScore > 75 ? "Develop experience presenting complex findings to non-technical stakeholders" : "Practice explaining technical concepts in simple terms"}
+3. Build a portfolio demonstrating your data analysis and problem-solving capabilities
+4. ${normalizedTechnicalScore > 75 ? "Explore cutting-edge tools and methodologies in the field" : "Deepen knowledge of fundamental data tools and technologies"}
 
-## Overall score: ${score}
+## Overall score: ${overallScore}
 
-This simulated interview practice gives you a foundation to build upon. Continue practicing responses to technical questions and developing your ability to communicate complex data concepts clearly and concisely.`;
+This assessment aims to provide constructive feedback for your continued growth in the data field. The challenges you faced in this interview reflect real-world scenarios you might encounter in a professional setting.`;
 }

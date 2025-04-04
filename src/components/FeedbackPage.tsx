@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from '@/lib/utils';
 
 const FeedbackPage: React.FC = () => {
   const [feedback, setFeedback] = useState<string>('');
@@ -65,7 +66,7 @@ const FeedbackPage: React.FC = () => {
         setFeedback(result);
         
         // Extract overall score if present
-        const scoreMatch = result.match(/overall score:?\\s*([0-9]+)/i);
+        const scoreMatch = result.match(/overall score:?\s*(\d+)/i);
         if (scoreMatch && scoreMatch[1]) {
           setOverallScore(parseInt(scoreMatch[1], 10));
         }
@@ -100,6 +101,20 @@ const FeedbackPage: React.FC = () => {
     ? evaluations.reduce((sum, evaluation) => sum + evaluation.score, 0) / evaluations.length
     : 0;
   
+  // Helper function to get score color class
+  const getScoreColorClass = (score: number): string => {
+    if (score >= 8) return "text-green-600";
+    if (score >= 6) return "text-amber-600";
+    return "text-red-600";
+  };
+  
+  // Helper function to get score background class
+  const getScoreBackgroundClass = (score: number): string => {
+    if (score >= 8) return "bg-green-500";
+    if (score >= 6) return "bg-amber-500";
+    return "bg-red-500";
+  };
+  
   // Render feedback with proper formatting
   const renderFeedback = () => {
     if (!feedback) return null;
@@ -111,15 +126,28 @@ const FeedbackPage: React.FC = () => {
                         (/^[A-Z][\w\s]+:$/.test(paragraph)) || 
                         paragraph.length < 50 && paragraph.toUpperCase() === paragraph;
       
-      return isHeading ? (
-        <h3 key={index} className="text-lg font-medium mt-6 mb-2">
-          {paragraph.replace(/^#\s*/, '')}
-        </h3>
-      ) : (
-        <p key={index} className="mb-4 text-muted-foreground">
-          {paragraph}
-        </p>
-      );
+      // Check if this paragraph is a list item
+      const isListItem = paragraph.match(/^\d+\.\s/) || paragraph.match(/^\*\s/) || paragraph.match(/^-\s/);
+      
+      if (isHeading) {
+        return (
+          <h3 key={index} className="text-lg font-medium mt-6 mb-3 text-primary">
+            {paragraph.replace(/^#+\s*/, '')}
+          </h3>
+        );
+      } else if (isListItem) {
+        return (
+          <div key={index} className="mb-2 pl-4 border-l-2 border-primary/20">
+            <p className="text-muted-foreground">{paragraph}</p>
+          </div>
+        );
+      } else {
+        return (
+          <p key={index} className="mb-4 text-muted-foreground">
+            {paragraph}
+          </p>
+        );
+      }
     });
   };
   
@@ -148,10 +176,21 @@ const FeedbackPage: React.FC = () => {
             </div>
             
             {overallScore !== null && (
-              <div className="md:ml-auto p-3 bg-primary/10 rounded-lg">
+              <div className="md:ml-auto p-4 rounded-lg bg-gradient-to-br from-primary/5 to-primary/20 border border-primary/10">
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground">Overall Score</p>
-                  <p className="text-2xl font-bold text-primary">{overallScore}/100</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <p className={cn("text-3xl font-bold", getScoreColorClass(overallScore / 10))}>
+                      {overallScore}
+                    </p>
+                    <p className="text-sm text-muted-foreground">/100</p>
+                  </div>
+                  <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
+                    <div
+                      className={cn("h-2 rounded-full", getScoreBackgroundClass(overallScore / 10))}
+                      style={{ width: `${overallScore}%` }}
+                    ></div>
+                  </div>
                 </div>
               </div>
             )}
@@ -171,7 +210,7 @@ const FeedbackPage: React.FC = () => {
                     <TableRow>
                       <TableHead className="w-12">#</TableHead>
                       <TableHead>Question</TableHead>
-                      <TableHead className="w-16 text-center">Score</TableHead>
+                      <TableHead className="w-20 text-center">Score</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -186,9 +225,23 @@ const FeedbackPage: React.FC = () => {
                               <p className="text-sm text-muted-foreground">{answers[index] || "No answer provided"}</p>
                               
                               {evaluations[index].feedback && (
-                                <div className="mt-2 p-2 bg-muted/50 rounded-md">
+                                <div className="mt-3 p-3 bg-muted/50 rounded-md">
                                   <p className="text-xs font-medium mb-1">Feedback:</p>
-                                  <p className="text-sm">{evaluations[index].feedback}</p>
+                                  <div className="text-sm">
+                                    {evaluations[index].score >= 8 && (
+                                      <div className="flex gap-2 items-start mb-1.5">
+                                        <Check className="h-4 w-4 text-green-600 mt-0.5" />
+                                        <p><span className="font-medium">Strengths:</span> {evaluations[index].feedback.split('.')[0]}.</p>
+                                      </div>
+                                    )}
+                                    
+                                    {evaluations[index].score < 8 && (
+                                      <div className="flex gap-2 items-start mb-1.5">
+                                        <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
+                                        <p><span className="font-medium">Areas for improvement:</span> {evaluations[index].feedback}</p>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               )}
                             </div>
@@ -197,10 +250,12 @@ const FeedbackPage: React.FC = () => {
                         <TableCell className="text-center">
                           {evaluations[index] ? (
                             <div className="flex flex-col items-center">
-                              <span className="font-medium">{evaluations[index].score}/10</span>
-                              <div className="w-8 h-1 bg-gray-200 rounded-full mt-1">
+                              <span className={cn("font-medium", getScoreColorClass(evaluations[index].score))}>
+                                {evaluations[index].score}/10
+                              </span>
+                              <div className="w-16 h-2 bg-gray-200 rounded-full mt-1.5">
                                 <div
-                                  className="h-1 bg-primary rounded-full"
+                                  className={cn("h-2 rounded-full", getScoreBackgroundClass(evaluations[index].score))}
                                   style={{ width: `${evaluations[index].score * 10}%` }}
                                 ></div>
                               </div>
@@ -217,7 +272,17 @@ const FeedbackPage: React.FC = () => {
               
               <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Average Score</span>
-                <span className="font-medium">{averageScore.toFixed(1)}/10</span>
+                <div className="flex items-center gap-2">
+                  <span className={cn("font-medium", getScoreColorClass(averageScore))}>
+                    {averageScore.toFixed(1)}/10
+                  </span>
+                  <div className="w-16 h-2 bg-gray-200 rounded-full">
+                    <div
+                      className={cn("h-2 rounded-full", getScoreBackgroundClass(averageScore))}
+                      style={{ width: `${averageScore * 10}%` }}
+                    ></div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
