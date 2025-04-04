@@ -32,7 +32,7 @@ export function useSpeechRecognition({
         
         recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           let interimTranscript = '';
-          let finalTranscript = transcript; // Start with existing transcript
+          let finalTranscript = ''; // Start with empty string instead of existing transcript
           
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const result = event.results[i][0].transcript;
@@ -43,11 +43,12 @@ export function useSpeechRecognition({
             }
           }
           
-          const newTranscript = finalTranscript;
+          const newTranscript = finalTranscript || interimTranscript;
           console.log("Speech recognition result:", newTranscript);
-          setTranscript(newTranscript);
+          setTranscript(prevTranscript => prevTranscript + newTranscript);
+          
           if (onTranscriptChange) {
-            onTranscriptChange(newTranscript);
+            onTranscriptChange(transcript + newTranscript);
           }
         };
         
@@ -100,6 +101,8 @@ export function useSpeechRecognition({
   const startRecording = () => {
     console.log("Starting recording in hook");
     setIsRecording(true);
+    // Reset transcript when starting a new recording
+    setTranscript('');
     startRecognition();
   };
   

@@ -1,5 +1,5 @@
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
 import { getRandomWaitingMessage } from '@/utils/questionUtils';
@@ -36,14 +36,22 @@ export const useSpeechControl = ({
   setIsWaiting,
   setWaitingMessage
 }: UseSpeechControlProps): UseSpeechControlReturn => {
+  const [localTranscript, setLocalTranscript] = useState('');
+  
   const { transcript, isRecording, startRecording: startSpeechRecognition, stopRecording: stopSpeechRecognition, resetTranscript } = useSpeechRecognition({
     onTranscriptChange: (newTranscript) => {
       console.log("Transcript updated:", newTranscript);
+      setLocalTranscript(newTranscript);
     }
   });
+  
   const { isSpeaking, isMuted, readAloud, stopSpeech, toggleMute: toggleSpeechMute } = useSpeechSynthesis();
   const lastReadQuestionRef = useRef<string>('');
-  const [localTranscript, setLocalTranscript] = useState('');
+  
+  // Debug logging for transcript values
+  useEffect(() => {
+    console.log("useSpeechControl - transcript value:", transcript);
+  }, [transcript]);
   
   const handleStartRecording = () => {
     console.log("Starting recording...");

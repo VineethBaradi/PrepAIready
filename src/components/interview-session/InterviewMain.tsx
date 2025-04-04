@@ -70,7 +70,6 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     if (currentQuestion) {
       sessionStorage.setItem('currentQuestion', currentQuestion);
     }
-    // Clean up console logs
     console.log("Current question:", currentQuestion);
   }, [currentQuestion]);
 
@@ -134,6 +133,11 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     });
   };
 
+  // Debug logging for transcript
+  useEffect(() => {
+    console.log("Current transcript:", transcript);
+  }, [transcript]);
+
   useEffect(() => {
     return () => {
       if (waitingTimerRef.current) {
@@ -174,7 +178,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
             <RecordingControls 
               isRecording={isRecording}
               isWaiting={localIsWaiting}
-              hasTranscript={!!transcript}
+              hasTranscript={transcript.trim().length > 0}
               timer={timer}
               formatTime={formatTime}
               onToggleRecording={handleToggleRecording}

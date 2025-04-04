@@ -41,7 +41,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
         {isRecording && <span className="ml-3 text-sm font-medium animate-fade-in">{formatTime(timer)}</span>}
       </div>
       
-      {(!isRecording && !isWaiting && hasTranscript && !isLastQuestion) && (
+      {(!isRecording && hasTranscript && !isLastQuestion) && (
         <Button 
           variant="secondary" 
           onClick={onNextQuestion} 
