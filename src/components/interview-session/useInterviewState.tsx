@@ -67,6 +67,16 @@ export const useInterviewState = ({
     const jobRole = sessionStorage.getItem('jobRole') || 'Data Analyst';
     
     try {
+      // Check for SQL or Python coding questions before evaluation
+      const currentQuestion = questions[currentQuestionIndex].toLowerCase();
+      if ((currentQuestion.includes('sql') && currentQuestion.includes('query')) || 
+          (currentQuestion.includes('write') && (currentQuestion.includes('sql') || currentQuestion.includes('python'))) || 
+          currentQuestion.includes('coding') || 
+          currentQuestion.includes('code')) {
+        setShowCodeInput(true);
+        return;
+      }
+      
       const result = await evaluateAnswer(
         questions[currentQuestionIndex],
         answer,
@@ -87,12 +97,6 @@ export const useInterviewState = ({
       };
       setEvaluations(updatedEvaluations);
       
-      if (questions[currentQuestionIndex]?.toLowerCase().includes("code") || 
-          questions[currentQuestionIndex]?.toLowerCase().includes("sql") ||
-          questions[currentQuestionIndex]?.toLowerCase().includes("python")) {
-        setShowCodeInput(true);
-      }
-      
       if (currentQuestionIndex === questions.length - 1) {
         setIsInterviewComplete(true);
       }
@@ -108,8 +112,48 @@ export const useInterviewState = ({
   };
   
   const handleSubmitCode = () => {
-    processAnswer(codeInput);
-    setShowCodeInput(false);
+    const updatedAnswers = [...answers];
+    updatedAnswers[currentQuestionIndex] = codeInput;
+    setAnswers(updatedAnswers);
+    
+    const jobRole = sessionStorage.getItem('jobRole') || 'Data Analyst';
+    
+    try {
+      evaluateAnswer(
+        questions[currentQuestionIndex],
+        codeInput,
+        jobRole
+      ).then(result => {
+        let normalizedScore = result.score;
+        if (normalizedScore > 10) {
+          normalizedScore = Math.round(normalizedScore / 10);
+        }
+        
+        normalizedScore = Math.max(0, Math.min(10, normalizedScore));
+        
+        const updatedEvaluations = [...evaluations];
+        updatedEvaluations[currentQuestionIndex] = {
+          score: normalizedScore,
+          feedback: result.feedback
+        };
+        setEvaluations(updatedEvaluations);
+      });
+      
+      setShowCodeInput(false);
+      
+      if (currentQuestionIndex === questions.length - 1) {
+        setIsInterviewComplete(true);
+      }
+    } catch (error) {
+      console.error("Error evaluating code answer:", error);
+      const updatedEvaluations = [...evaluations];
+      updatedEvaluations[currentQuestionIndex] = {
+        score: 5,
+        feedback: "We'll provide detailed feedback at the end of the interview."
+      };
+      setEvaluations(updatedEvaluations);
+      setShowCodeInput(false);
+    }
   };
   
   const handleFinishInterview = () => {

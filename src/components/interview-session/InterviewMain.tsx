@@ -62,7 +62,8 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     isSpeaking,
     isMuted,
     toggleMute,
-    toggleRecording
+    toggleRecording,
+    readQuestion
   } = useSpeechControl({
     currentQuestion,
     processAnswer,
@@ -71,6 +72,13 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     setIsWaiting: setLocalIsWaiting,
     setWaitingMessage: setLocalWaitingMessage
   });
+
+  // Automatically read the question aloud when it changes
+  useEffect(() => {
+    if (currentQuestion && !isMuted && readQuestion) {
+      readQuestion(currentQuestion);
+    }
+  }, [currentQuestion, isMuted, readQuestion]);
 
   const handleToggleRecording = () => {
     if (isRecording) {

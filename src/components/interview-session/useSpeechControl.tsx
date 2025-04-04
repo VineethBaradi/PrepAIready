@@ -23,6 +23,7 @@ interface UseSpeechControlReturn {
   toggleRecording: () => void;
   handleStartRecording: () => void;
   handleStopRecording: () => void;
+  readQuestion: (text: string) => void;
 }
 
 const waitingMessages = [
@@ -78,13 +79,13 @@ export const useSpeechControl = ({
   };
   
   const toggleMute = (): boolean => {
-    const newMuteState = toggleSpeechMute();
-    
-    if (!newMuteState && typeof readAloud === 'function') {
-      readAloud(currentQuestion);
+    return toggleSpeechMute();
+  };
+  
+  const readQuestion = (text: string) => {
+    if (typeof readAloud === 'function' && !isMuted) {
+      readAloud(text);
     }
-    
-    return newMuteState;
   };
   
   return {
@@ -97,6 +98,7 @@ export const useSpeechControl = ({
     toggleMute,
     toggleRecording,
     handleStartRecording,
-    handleStopRecording
+    handleStopRecording,
+    readQuestion
   };
 };

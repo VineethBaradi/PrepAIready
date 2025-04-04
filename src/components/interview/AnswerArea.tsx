@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { BarChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface EvaluationResult {
@@ -42,21 +41,6 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
       ) : transcript ? (
         <div>
           <p>{transcript}</p>
-          
-          {evaluation && evaluation.score > 0 && (
-            <div className="mt-4 p-3 bg-secondary/30 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center">
-                  <BarChart className="h-4 w-4 mr-2 text-primary" />
-                  <span className="text-sm font-medium">Response Evaluation</span>
-                </div>
-                <div className="px-2 py-1 bg-primary/10 rounded text-sm font-medium">
-                  Score: {evaluation.score}/10
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground">{evaluation.feedback}</p>
-            </div>
-          )}
         </div>
       ) : (
         <p className="text-muted-foreground text-center my-8">

@@ -39,57 +39,25 @@ export const dataRoles = [
   "Data Architect"
 ];
 
-// Fallback questions for different data roles
-const fallbackQuestions = {
-  "Data Analyst": [
-    "Can you explain your experience with SQL and data manipulation?",
-    "What data visualization tools have you worked with and how do you choose the right visualization for different scenarios?", 
-    "Describe a difficult data cleaning challenge you've faced and how you approached it.",
-    "How do you ensure data quality in your analyses?",
-    "Explain your process for developing dashboards and reporting solutions.",
-    "How do you communicate data insights to non-technical stakeholders?",
-    "Describe your experience with statistical analysis and hypothesis testing.",
-    "How do you approach a new data analysis project from start to finish?"
+// Technical coding questions for SQL and Python
+const technicalQuestions = {
+  "sql": [
+    "Write a SQL query to find the top 5 customers who have placed the most orders in the past 6 months.",
+    "Given a table 'employees' with columns (id, name, salary, department_id) and a table 'departments' with columns (id, name), write a SQL query to find the highest paid employee in each department.",
+    "Write a SQL query to find duplicates in a table 'customer_data' based on email and phone fields.",
+    "Write a SQL query to calculate a running total of sales for each day in the current month.",
+    "Given a table of user logins with columns (user_id, login_date), write a SQL query to find users who logged in for 5 or more consecutive days.",
+    "Write a SQL query that will pivot data from a 'sales' table showing product sales by quarter.",
+    "Given a table 'transactions' with columns (transaction_id, user_id, transaction_date, amount), write a SQL query to calculate the month-over-month percentage change in total transaction amount."
   ],
-  "Data Engineer": [
-    "Describe your experience designing and implementing data pipelines.",
-    "What ETL tools have you worked with and what were their pros and cons?",
-    "How do you approach data modeling in a data warehouse environment?",
-    "Explain how you've implemented data quality checks in your pipelines.",
-    "What's your experience with stream processing versus batch processing?",
-    "How do you handle schema evolution in a production environment?",
-    "Describe your experience with distributed computing frameworks.",
-    "How do you optimize database performance for analytical workloads?"
-  ],
-  "Data Scientist": [
-    "Explain your approach to feature engineering and selection.",
-    "Describe a machine learning project you've worked on from problem definition to deployment.",
-    "How do you validate machine learning models and prevent overfitting?",
-    "What techniques do you use to handle imbalanced datasets?",
-    "How do you approach time series forecasting problems?",
-    "Describe your experience with natural language processing.",
-    "How do you communicate model results to business stakeholders?",
-    "What's your approach to productionizing machine learning models?"
-  ],
-  "ML Engineer": [
-    "Describe your experience deploying machine learning models to production.",
-    "How do you handle model versioning and experiment tracking?",
-    "What techniques have you used for model monitoring and maintenance?",
-    "Explain how you've optimized model inference performance.",
-    "What's your approach to building scalable ML infrastructure?",
-    "How do you handle data drift and concept drift in production models?",
-    "Describe a time when you had to debug a complex ML system issue.",
-    "What frameworks and tools do you use for ML development and deployment?"
-  ],
-  "default": [
-    "Can you explain your experience with data manipulation and analysis?",
-    "Describe a challenging data project you worked on and how you approached it.",
-    "How do you handle missing or inconsistent data in your analyses?",
-    "Explain a technical solution you've implemented and how you evaluated its performance.",
-    "How do you communicate complex technical concepts to non-technical stakeholders?",
-    "Describe your experience with data visualization tools and techniques.",
-    "How do you approach data quality assurance in your projects?",
-    "What data processing frameworks or tools have you worked with?"
+  "python": [
+    "Write a Python function to clean a dataset by handling missing values, removing duplicates, and converting date strings to datetime objects.",
+    "Implement a function in Python to detect outliers in a dataset using the IQR method.",
+    "Write a Python function to extract data from a JSON API response and convert it into a pandas DataFrame.",
+    "Create a Python function that takes in two dataframes and performs a fuzzy match on specified columns.",
+    "Write a Python function to perform feature scaling on a dataset using standardization and normalization.",
+    "Implement a Python function that creates a time series forecasting model for sales data.",
+    "Write a Python script to parse and extract structured data from PDF files using libraries like PyPDF2 or pdfplumber."
   ]
 };
 
@@ -111,7 +79,7 @@ export const generateInterviewQuestions = async (
       description: "There was an issue with the API key. Please try again later.",
       variant: "destructive",
     });
-    return getFallbackQuestions(jobRole);
+    return generateTechnicalQuestions(jobRole);
   }
 
   try {
@@ -126,21 +94,21 @@ export const generateInterviewQuestions = async (
         messages: [
           {
             role: "system",
-            content: `Act as a Technical Interviewer for data roles. Your goal is to gauge the candidate's fit for a ${jobRole} role by asking technical (70%), coding (20%), and behavioral/situational (10%) questions. You'll provide blunt, concise feedback at the end.
+            content: `Act as a Technical Interviewer for data roles. Your goal is to gauge the candidate's fit for a ${jobRole} role by asking technical (50%), coding (40%), and behavioral/situational (10%) questions. For coding questions, focus heavily on SQL and Python practical problems.
 
 Steps to Follow:
-1. Analyze the Resume and Job Description:
-   - Identify key technical skills (e.g., SQL, Python, ETL tools), experience, and gaps.
-   - Note the job requirements relevant to ${jobRole} (e.g., cloud platforms, data pipelines, visualization tools).
+1. Analyze the Resume: Identify key technical skills, experience, and gaps from the resume.
 
 2. Create Questions:
-   - Technical (70%): Ask about tools/skills listed in the resume and job description.
-   - Coding (20%): Ask coding-related questions to test hands-on skills in Python, SQL, or other relevant languages/tools.
-   - Others (10%): Ask behavioral, teamwork, problem-solving, and motivation questions.`
+   - Technical (50%): Questions about tools/skills relevant to ${jobRole} (databases, analytics tools, etc.)
+   - Coding (40%): SQL and Python coding questions that require demonstrating problem-solving skills. Include specific data manipulation, analysis, or algorithm challenges.
+   - Behavioral (10%): Brief questions about teamwork or problem-solving approach.
+   
+3. Make at least 3 questions specifically about SQL queries and 2 about Python data manipulation/analysis.`
           },
           {
             role: "user",
-            content: `Generate ${count} interview questions for a ${jobRole} position based on this resume:\n\n${resume}\n\nCreate a mix of questions following this distribution: 70% technical questions specific to ${jobRole} (including SQL, Python, statistics, data modeling, machine learning concepts as relevant), 20% coding questions that require demonstrating code writing skills, and 10% behavioral questions. Format your response as a JSON array of strings, with each string being a question.`
+            content: `Generate ${count} challenging interview questions for a ${jobRole} position based on this resume:\n\n${resume}\n\nCreate a mix of questions including: 50% technical questions specific to ${jobRole}, 40% coding questions that require demonstrating SQL and Python skills (make these practical and challenging), and 10% behavioral questions. Format your response as a JSON array of strings, with each string being a question. Include detailed SQL and Python scenario-based questions that would require writing code.`
           }
         ],
         temperature: 0.7,
@@ -153,10 +121,10 @@ Steps to Follow:
         console.error("API quota exceeded or payment required");
         toast({
           title: "API Limit Reached",
-          description: "Using backup questions for this interview session.",
+          description: "Using generated technical questions for this interview session.",
           variant: "default",
         });
-        return getFallbackQuestions(jobRole);
+        return generateTechnicalQuestions(jobRole);
       }
       throw new Error(`API request failed with status ${response.status}`);
     }
@@ -183,28 +151,99 @@ Steps to Follow:
       throw new Error("Failed to parse questions from API response");
     }
 
+    // Ensure we have at least a few technical coding questions
+    if (!questions.some(q => q.toLowerCase().includes('sql') || q.toLowerCase().includes('query'))) {
+      const sqlQuestion = technicalQuestions.sql[Math.floor(Math.random() * technicalQuestions.sql.length)];
+      questions.splice(Math.floor(questions.length / 2), 0, sqlQuestion);
+    }
+    
+    if (!questions.some(q => q.toLowerCase().includes('python'))) {
+      const pythonQuestion = technicalQuestions.python[Math.floor(Math.random() * technicalQuestions.python.length)];
+      questions.splice(Math.floor(questions.length / 2) + 1, 0, pythonQuestion);
+    }
+
     return questions;
   } catch (error) {
     console.error("Error generating interview questions:", error);
     toast({
-      title: "Using Backup Questions",
-      description: "We're using pre-defined questions for your interview practice.",
+      title: "Using Generated Technical Questions",
+      description: "We're generating technical questions for your interview practice.",
       variant: "default",
     });
     
-    return getFallbackQuestions(jobRole);
+    return generateTechnicalQuestions(jobRole);
   }
 };
 
-// Helper function to get role-specific fallback questions
-function getFallbackQuestions(jobRole: string): string[] {
-  // Find the matching role or use default questions
-  const roleKey = Object.keys(fallbackQuestions).find(
-    key => jobRole.toLowerCase().includes(key.toLowerCase())
-  ) || "default";
+// Helper function to generate technical questions based on role
+function generateTechnicalQuestions(jobRole: string): string[] {
+  // Base questions for all roles
+  const baseQuestions = [
+    "Tell me about your experience with data analysis and how you've applied it in your previous roles.",
+    "How do you approach cleaning and preparing data for analysis?",
+    "Describe a challenging data project you've worked on and how you overcame obstacles."
+  ];
   
-  // @ts-ignore - we know this is safe
-  return fallbackQuestions[roleKey as keyof typeof fallbackQuestions];
+  // Role-specific technical questions
+  const roleSpecificQuestions: Record<string, string[]> = {
+    "Data Analyst": [
+      "How do you determine which type of visualization is most appropriate for different types of data?",
+      "Explain how you would identify and handle outliers in a dataset.",
+      "What statistical methods do you commonly use to validate findings in your analyses?"
+    ],
+    "Data Engineer": [
+      "Describe your experience with designing and optimizing data pipelines.",
+      "How do you ensure data quality and consistency in ETL processes?",
+      "What strategies do you use for database optimization and performance tuning?"
+    ],
+    "Data Scientist": [
+      "How do you approach feature selection and engineering in machine learning projects?",
+      "Explain your process for validating and testing machine learning models.",
+      "How do you handle imbalanced datasets in classification problems?"
+    ],
+    "ML Engineer": [
+      "Describe your experience deploying machine learning models to production environments.",
+      "How do you monitor and update models that are already in production?",
+      "What techniques do you use to optimize model inference performance?"
+    ]
+  };
+  
+  // Get role-specific questions or use general questions if role not found
+  const specificQuestions = Object.keys(roleSpecificQuestions).find(
+    key => jobRole.toLowerCase().includes(key.toLowerCase())
+  ) 
+    ? roleSpecificQuestions[Object.keys(roleSpecificQuestions).find(
+        key => jobRole.toLowerCase().includes(key.toLowerCase())
+      ) as keyof typeof roleSpecificQuestions] 
+    : [
+        "What data tools and technologies are you most experienced with?",
+        "How do you keep up with emerging trends in data technology?",
+        "Describe your approach to documenting your work and communicating results to stakeholders."
+      ];
+  
+  // Always include SQL and Python coding questions
+  const sqlQuestions = [
+    "Write a SQL query to find the top 5 customers who have placed the most orders in the past 6 months.",
+    "Given tables 'employees' and 'departments', write a SQL query to find the average salary by department, showing only departments with an average salary above $50,000.",
+    "Write a SQL query to identify customers who haven't made a purchase in the last 3 months but were active in the 3 months before that."
+  ];
+  
+  const pythonQuestions = [
+    "Write a Python function that takes a pandas DataFrame and identifies columns with more than 20% missing values, then handles them appropriately based on data type.",
+    "Create a Python function to perform time series analysis on sales data, identifying trends and seasonal patterns.",
+    "Write a Python script that connects to an API, retrieves JSON data, and transforms it into a structured pandas DataFrame for analysis."
+  ];
+  
+  // Combine questions
+  const allQuestions = [
+    ...baseQuestions,
+    ...specificQuestions,
+    ...sqlQuestions.slice(0, 2),
+    ...pythonQuestions.slice(0, 2)
+  ];
+  
+  // Shuffle questions
+  return allQuestions.sort(() => Math.random() - 0.5);
 }
 
 // Function to evaluate a single interview answer
