@@ -83,7 +83,8 @@ Format the response as constructive professional feedback that would help the ca
 };
 
 // Helper function to generate simulated feedback
-function getSimulatedFeedback(questions: string[], answers: string[]): string {
+// Updated function signature to include jobRole parameter
+function getSimulatedFeedback(questions: string[], answers: string[], jobRole: string): string {
   // Calculate score based on answer content and length
   let totalScore = 0;
   let technicalScore = 0;
@@ -197,12 +198,17 @@ function getSimulatedFeedback(questions: string[], answers: string[]): string {
     strengths.push("Familiar with Python data processing libraries");
   }
   
+  // Add role-specific feedback
+  const roleSpecificFeedback = getRoleSpecificFeedback(jobRole, normalizedTechnicalScore, allAnswers);
+  if (roleSpecificFeedback.strength) strengths.push(roleSpecificFeedback.strength);
+  if (roleSpecificFeedback.improvement) improvements.push(roleSpecificFeedback.improvement);
+  
   // Create the feedback
   return `# Interview Performance Assessment
 
 ## Overall Evaluation
 
-Based on your responses to the interview questions, you've demonstrated ${overallScore > 80 ? "strong" : overallScore > 70 ? "good" : "basic"} proficiency in skills required for a data role. Your answers reflect ${overallScore > 80 ? "in-depth knowledge" : overallScore > 70 ? "solid understanding" : "foundational knowledge"} of data concepts and methodologies.
+Based on your responses to the interview questions for the ${jobRole} position, you've demonstrated ${overallScore > 80 ? "strong" : overallScore > 70 ? "good" : "basic"} proficiency in skills required for this data role. Your answers reflect ${overallScore > 80 ? "in-depth knowledge" : overallScore > 70 ? "solid understanding" : "foundational knowledge"} of data concepts and methodologies.
 
 ## Technical Skills Assessment
 
@@ -233,5 +239,46 @@ ${improvements.map(i => `- ${i}`).join("\n")}
 
 ## Overall score: ${overallScore}
 
-This assessment aims to provide constructive feedback for your continued growth in the data field. The challenges you faced in this interview reflect real-world scenarios you might encounter in a professional setting.`;
+This assessment aims to provide constructive feedback for your continued growth in the ${jobRole} field. The challenges you faced in this interview reflect real-world scenarios you might encounter in a professional setting.`;
+}
+
+// Helper function for role-specific feedback
+function getRoleSpecificFeedback(role: string, technicalScore: number, answers: string): { strength?: string; improvement?: string } {
+  const result: { strength?: string; improvement?: string } = {};
+  
+  const lowerRole = role.toLowerCase();
+  
+  if (lowerRole.includes('data scientist') || lowerRole.includes('machine learning')) {
+    if (answers.includes('model') && (answers.includes('evaluation') || answers.includes('metric'))) {
+      result.strength = "Good understanding of model evaluation techniques";
+    } else {
+      result.improvement = "Strengthen knowledge of model evaluation metrics and validation strategies";
+    }
+    
+    if (technicalScore < 75 && !answers.includes('regularization')) {
+      result.improvement = "Deepen understanding of advanced machine learning concepts like regularization techniques";
+    }
+  }
+  
+  if (lowerRole.includes('data engineer')) {
+    if (answers.includes('pipeline') && answers.includes('etl')) {
+      result.strength = "Strong knowledge of ETL pipeline development";
+    } else {
+      result.improvement = "Enhance expertise in building and optimizing data pipelines";
+    }
+    
+    if (technicalScore < 75 && !answers.includes('distributed')) {
+      result.improvement = "Expand knowledge of distributed processing systems for large-scale data";
+    }
+  }
+  
+  if (lowerRole.includes('analyst')) {
+    if (answers.includes('visualization') && (answers.includes('tableau') || answers.includes('power bi'))) {
+      result.strength = "Good command of data visualization tools and principles";
+    } else {
+      result.improvement = "Develop stronger data visualization and reporting skills";
+    }
+  }
+  
+  return result;
 }
