@@ -13,7 +13,7 @@ interface AnswerAreaProps {
   isRecording: boolean;
   isWaiting: boolean;
   waitingMessage: string;
-  evaluation: EvaluationResult;
+  evaluation: EvaluationResult | null;
 }
 
 export const AnswerArea: React.FC<AnswerAreaProps> = ({
@@ -43,7 +43,7 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
         <div>
           <p>{transcript}</p>
           
-          {evaluation.score > 0 && (
+          {evaluation && evaluation.score > 0 && (
             <div className="mt-4 p-3 bg-secondary/30 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
