@@ -25,6 +25,7 @@ interface InterviewMainProps {
   setCodeInput: React.Dispatch<React.SetStateAction<string>>;
   handleSubmitCode: () => void;
   handleFinishInterview: () => void;
+  cleanedQuestions?: string[];
 }
 
 export const InterviewMain: React.FC<InterviewMainProps> = ({
@@ -42,7 +43,8 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
   processAnswer,
   setCodeInput,
   handleSubmitCode,
-  handleFinishInterview
+  handleFinishInterview,
+  cleanedQuestions = []
 }) => {
   const [localIsWaiting, setLocalIsWaiting] = useState(isWaiting);
   const [localWaitingMessage, setLocalWaitingMessage] = useState(waitingMessage);
@@ -55,7 +57,9 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     setLocalShowCodeInput(showCodeInput);
   }, [isWaiting, waitingMessage, showCodeInput]);
   
-  const currentQuestion = questions[currentQuestionIndex];
+  // Use cleaned questions if available, otherwise use the original questions
+  const displayQuestions = cleanedQuestions.length > 0 ? cleanedQuestions : questions;
+  const currentQuestion = displayQuestions[currentQuestionIndex];
   
   // Store current question in sessionStorage for AnswerArea to check
   useEffect(() => {
@@ -71,7 +75,8 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     isMuted,
     toggleMute,
     toggleRecording,
-    readQuestion
+    readQuestion,
+    resetTranscript
   } = useSpeechControl({
     currentQuestion,
     processAnswer,
@@ -88,6 +93,11 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     }
   }, [currentQuestion, isMuted, readQuestion]);
 
+  // Reset transcript when moving to next question
+  useEffect(() => {
+    resetTranscript();
+  }, [currentQuestionIndex, resetTranscript]);
+
   const handleToggleRecording = () => {
     if (isRecording) {
       stopTimer();
@@ -100,6 +110,13 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
 
   const handleToggleCodeInput = () => {
     setLocalShowCodeInput(prev => !prev);
+  };
+
+  const handleNextWithReset = () => {
+    // Clear transcript first
+    resetTranscript();
+    // Then go to next question
+    handleNextQuestion();
   };
 
   useEffect(() => {
@@ -146,7 +163,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
               timer={timer}
               formatTime={formatTime}
               onToggleRecording={handleToggleRecording}
-              onNextQuestion={handleNextQuestion}
+              onNextQuestion={handleNextWithReset}
               isLastQuestion={currentQuestionIndex === questions.length - 1}
             />
           </div>

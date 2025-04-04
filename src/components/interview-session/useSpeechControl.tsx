@@ -24,6 +24,7 @@ interface UseSpeechControlReturn {
   handleStartRecording: () => void;
   handleStopRecording: () => void;
   readQuestion: (text: string) => void;
+  resetTranscript: () => void;
 }
 
 const waitingMessages = [
@@ -42,7 +43,7 @@ export const useSpeechControl = ({
   setIsWaiting,
   setWaitingMessage
 }: UseSpeechControlProps): UseSpeechControlReturn => {
-  const { transcript, isRecording, startRecording: startSpeechRecognition, stopRecording: stopSpeechRecognition } = useSpeechRecognition({});
+  const { transcript, isRecording, startRecording: startSpeechRecognition, stopRecording: stopSpeechRecognition, resetTranscript } = useSpeechRecognition({});
   const { isSpeaking, isMuted, readAloud, stopSpeech, toggleMute: toggleSpeechMute } = useSpeechSynthesis();
   const lastReadQuestionRef = useRef<string>('');
   
@@ -102,6 +103,7 @@ export const useSpeechControl = ({
     toggleRecording,
     handleStartRecording,
     handleStopRecording,
-    readQuestion
+    readQuestion,
+    resetTranscript
   };
 };

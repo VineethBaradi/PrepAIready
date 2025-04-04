@@ -32,18 +32,25 @@ interface UseInterviewStateReturn {
   setCodeInput: React.Dispatch<React.SetStateAction<string>>;
   handleSubmitCode: () => void;
   handleFinishInterview: () => void;
+  cleanedQuestions: string[];
 }
 
 // Helper function to clean question text
 const cleanQuestionText = (question: string): string => {
+  // Remove common prefixes from AI-generated responses
+  let cleaned = question.replace(/^Here's a JSON array.*?:/i, '');
+  cleaned = cleaned.replace(/^\/\/\s*[A-Z\s]+\s*\(\d+%\):/i, '');
+  
   // Remove JSON formatting and markdown code blocks
-  let cleaned = question.replace(/```json|```/g, '');
+  cleaned = cleaned.replace(/```json|```/g, '');
+  
   // Remove array brackets and numbering
   cleaned = cleaned.replace(/^\s*\[\s*|\s*\]\s*$/g, '');
+  cleaned = cleaned.replace(/^\d+\.\s*/gm, '');
+  
   // Remove comments like "// Technical Questions (50%)"
   cleaned = cleaned.replace(/\/\/.*$/gm, '');
-  // Remove "Here's a JSON array..." intro text
-  cleaned = cleaned.replace(/Here's a JSON array.*?:/g, '');
+  
   // Remove any remaining JSON formatting
   try {
     // If it's still valid JSON, parse it and extract just the question text
@@ -240,6 +247,7 @@ export const useInterviewState = ({
     processAnswer,
     setCodeInput,
     handleSubmitCode,
-    handleFinishInterview
+    handleFinishInterview,
+    cleanedQuestions
   };
 };

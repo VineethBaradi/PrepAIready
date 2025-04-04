@@ -3,6 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Code } from 'lucide-react';
 import Button from '../Button';
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AnswerAreaProps {
   transcript: string;
@@ -30,7 +31,7 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
   return (
     <div 
       className={cn(
-        "flex-1 p-4 border rounded-lg mb-4 transition-all duration-300 overflow-y-auto relative",
+        "flex-1 p-4 border rounded-lg mb-4 transition-all duration-300 relative",
         isRecording 
           ? "border-primary bg-primary/5 animate-pulse-subtle" 
           : "border-input"
@@ -58,9 +59,11 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
           </div>
         </div>
       ) : transcript ? (
-        <div>
-          <p>{transcript}</p>
-        </div>
+        <ScrollArea className="h-full max-h-[300px] pr-4">
+          <div>
+            <p>{transcript}</p>
+          </div>
+        </ScrollArea>
       ) : (
         <p className="text-muted-foreground text-center my-8">
           {isRecording 
