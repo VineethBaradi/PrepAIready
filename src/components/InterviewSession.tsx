@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -98,8 +97,7 @@ const InterviewSession: React.FC = () => {
   
   useEffect(() => {
     if (!isLoading && questions.length > 0 && !isMuted) {
-      // Safely check if readAloud is a function before calling
-      if (readAloud && typeof readAloud === 'function') {
+      if (readAloud && readAloud instanceof Function) {
         readAloud(questions[currentQuestionIndex]);
       }
     }
