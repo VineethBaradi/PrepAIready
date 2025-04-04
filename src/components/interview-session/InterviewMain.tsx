@@ -101,7 +101,9 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
   // Reset transcript when moving to next question
   useEffect(() => {
     console.log("Current question index changed, resetting transcript");
-    resetTranscript();
+    if (resetTranscript) {
+      resetTranscript();
+    }
   }, [currentQuestionIndex, resetTranscript]);
 
   const handleToggleRecording = () => {
@@ -135,7 +137,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
 
   // Debug logging for transcript
   useEffect(() => {
-    console.log("Current transcript:", transcript);
+    console.log("InterviewMain - Current transcript:", transcript);
   }, [transcript]);
 
   useEffect(() => {
@@ -178,7 +180,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
             <RecordingControls 
               isRecording={isRecording}
               isWaiting={localIsWaiting}
-              hasTranscript={transcript.trim().length > 0}
+              hasTranscript={transcript && transcript.trim().length > 0}
               timer={timer}
               formatTime={formatTime}
               onToggleRecording={handleToggleRecording}

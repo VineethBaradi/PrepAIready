@@ -32,7 +32,7 @@ export function useSpeechRecognition({
         
         recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           let interimTranscript = '';
-          let finalTranscript = ''; // Start with empty string instead of existing transcript
+          let finalTranscript = '';
           
           for (let i = event.resultIndex; i < event.results.length; i++) {
             const result = event.results[i][0].transcript;
@@ -43,12 +43,22 @@ export function useSpeechRecognition({
             }
           }
           
-          const newTranscript = finalTranscript || interimTranscript;
-          console.log("Speech recognition result:", newTranscript);
-          setTranscript(prevTranscript => prevTranscript + newTranscript);
+          // Use the final transcript if available, otherwise use the interim
+          const newText = finalTranscript || interimTranscript;
           
-          if (onTranscriptChange) {
-            onTranscriptChange(transcript + newTranscript);
+          if (newText) {
+            // Update the transcript by appending the new text
+            setTranscript(prevTranscript => {
+              const updatedTranscript = prevTranscript + ' ' + newText;
+              console.log("Updated transcript:", updatedTranscript);
+              
+              // Notify through callback
+              if (onTranscriptChange) {
+                onTranscriptChange(updatedTranscript);
+              }
+              
+              return updatedTranscript;
+            });
           }
         };
         
@@ -72,7 +82,7 @@ export function useSpeechRecognition({
     return () => {
       stopRecognition();
     };
-  }, [onTranscriptChange]);
+  }, [onTranscriptChange, isRecording]);
 
   const startRecognition = () => {
     if (recognitionRef.current) {
@@ -101,8 +111,7 @@ export function useSpeechRecognition({
   const startRecording = () => {
     console.log("Starting recording in hook");
     setIsRecording(true);
-    // Reset transcript when starting a new recording
-    setTranscript('');
+    setTranscript(''); // Reset transcript when starting a new recording
     startRecognition();
   };
   

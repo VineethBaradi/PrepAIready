@@ -38,9 +38,15 @@ export const useSpeechControl = ({
 }: UseSpeechControlProps): UseSpeechControlReturn => {
   const [localTranscript, setLocalTranscript] = useState('');
   
-  const { transcript, isRecording, startRecording: startSpeechRecognition, stopRecording: stopSpeechRecognition, resetTranscript } = useSpeechRecognition({
+  const { 
+    transcript, 
+    isRecording, 
+    startRecording: startSpeechRecognition, 
+    stopRecording: stopSpeechRecognition, 
+    resetTranscript 
+  } = useSpeechRecognition({
     onTranscriptChange: (newTranscript) => {
-      console.log("Transcript updated:", newTranscript);
+      console.log("Transcript updated in useSpeechControl:", newTranscript);
       setLocalTranscript(newTranscript);
     }
   });
@@ -48,13 +54,17 @@ export const useSpeechControl = ({
   const { isSpeaking, isMuted, readAloud, stopSpeech, toggleMute: toggleSpeechMute } = useSpeechSynthesis();
   const lastReadQuestionRef = useRef<string>('');
   
-  // Debug logging for transcript values
+  // Synchronize states: When transcript changes from recognition, update localTranscript
   useEffect(() => {
-    console.log("useSpeechControl - transcript value:", transcript);
+    console.log("useSpeechControl - transcript value updated:", transcript);
+    if (transcript) {
+      setLocalTranscript(transcript);
+    }
   }, [transcript]);
   
   const handleStartRecording = () => {
     console.log("Starting recording...");
+    setLocalTranscript(''); // Clear local transcript when starting
     startSpeechRecognition();
     if (stopSpeech) {
       stopSpeech();
@@ -65,7 +75,8 @@ export const useSpeechControl = ({
     console.log("Stopping recording...");
     stopSpeechRecognition();
     
-    const userAnswer = transcript.trim();
+    // Use localTranscript for processing, which should be in sync with transcript
+    const userAnswer = localTranscript.trim();
     
     if (!userAnswer) {
       console.log("No transcript to process");
@@ -110,7 +121,7 @@ export const useSpeechControl = ({
   };
   
   return {
-    transcript,
+    transcript: localTranscript, // Return the local transcript for consistency
     isRecording,
     isSpeaking,
     isMuted,
@@ -121,6 +132,10 @@ export const useSpeechControl = ({
     handleStartRecording,
     handleStopRecording,
     readQuestion,
-    resetTranscript
+    resetTranscript: () => {
+      console.log("Reset transcript called from useSpeechControl");
+      resetTranscript();
+      setLocalTranscript('');
+    }
   };
 };

@@ -27,6 +27,10 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
   const currentQuestion = sessionStorage.getItem('currentQuestion') || '';
   const needsCodeInput = isCodingQuestion(currentQuestion);
   
+  useEffect(() => {
+    console.log("AnswerArea received transcript:", transcript);
+  }, [transcript]);
+  
   // Auto-scroll to bottom when transcript changes
   useEffect(() => {
     if (scrollRef.current) {
@@ -64,7 +68,7 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
             <p className="text-sm text-muted-foreground mt-2">{waitingMessage}</p>
           </div>
         </div>
-      ) : transcript ? (
+      ) : transcript && transcript.trim() ? (
         <ScrollArea className="h-full max-h-[300px]">
           <div className="pr-4" ref={scrollRef}>
             <p className="whitespace-pre-wrap">{transcript}</p>
