@@ -34,6 +34,31 @@ interface UseInterviewStateReturn {
   handleFinishInterview: () => void;
 }
 
+// Helper function to clean question text
+const cleanQuestionText = (question: string): string => {
+  // Remove JSON formatting and markdown code blocks
+  let cleaned = question.replace(/```json|```/g, '');
+  // Remove array brackets and numbering
+  cleaned = cleaned.replace(/^\s*\[\s*|\s*\]\s*$/g, '');
+  // Remove comments like "// Technical Questions (50%)"
+  cleaned = cleaned.replace(/\/\/.*$/gm, '');
+  // Remove "Here's a JSON array..." intro text
+  cleaned = cleaned.replace(/Here's a JSON array.*?:/g, '');
+  // Remove any remaining JSON formatting
+  try {
+    // If it's still valid JSON, parse it and extract just the question text
+    const parsed = JSON.parse(cleaned);
+    if (typeof parsed === 'object' && parsed.question) {
+      return parsed.question;
+    }
+  } catch (e) {
+    // Not JSON, continue with cleaning
+  }
+  
+  // Final cleanup - trim whitespace and remove quotes
+  return cleaned.trim().replace(/^["']|["']$/g, '');
+};
+
 // Helper function to detect if a question requires code input
 const isCodingQuestion = (question: string): boolean => {
   const lowerQuestion = question.toLowerCase();
@@ -43,7 +68,8 @@ const isCodingQuestion = (question: string): boolean => {
     lowerQuestion.includes('coding') ||
     (lowerQuestion.includes('code') && lowerQuestion.includes('write')) ||
     lowerQuestion.includes('implement a function') ||
-    lowerQuestion.includes('write a function')
+    lowerQuestion.includes('write a function') ||
+    lowerQuestion.includes('algorithm')
   );
 };
 
@@ -54,6 +80,9 @@ export const useInterviewState = ({
   setAnswers,
   setEvaluations
 }: UseInterviewStateProps): UseInterviewStateReturn => {
+  // Clean the questions when they're first received
+  const cleanedQuestions = questions.map(cleanQuestionText);
+  
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isWaiting, setIsWaiting] = useState(false);
   const [waitingMessage, setWaitingMessage] = useState("");
@@ -65,7 +94,8 @@ export const useInterviewState = ({
   const navigate = useNavigate();
   
   const handleNextQuestion = () => {
-    sessionStorage.setItem('interviewQuestions', JSON.stringify(questions));
+    // Store the cleaned questions in session storage
+    sessionStorage.setItem('interviewQuestions', JSON.stringify(cleanedQuestions));
     sessionStorage.setItem('interviewAnswers', JSON.stringify(answers));
     sessionStorage.setItem('interviewEvaluations', JSON.stringify(evaluations));
     
@@ -85,7 +115,7 @@ export const useInterviewState = ({
     
     try {
       // Check for SQL or Python coding questions before evaluation
-      const currentQuestion = questions[currentQuestionIndex];
+      const currentQuestion = cleanedQuestions[currentQuestionIndex];
       
       if (isCodingQuestion(currentQuestion)) {
         setShowCodeInput(true);
@@ -127,15 +157,21 @@ export const useInterviewState = ({
   };
   
   const handleSubmitCode = () => {
+    if (!codeInput.trim()) {
+      return; // Don't submit empty code
+    }
+    
     const updatedAnswers = [...answers];
     updatedAnswers[currentQuestionIndex] = codeInput;
     setAnswers(updatedAnswers);
     
     const jobRole = sessionStorage.getItem('jobRole') || 'Data Analyst';
+    setIsWaiting(true);
+    setWaitingMessage(waitingMessages[Math.floor(Math.random() * waitingMessages.length)]);
     
     try {
       evaluateAnswer(
-        questions[currentQuestionIndex],
+        cleanedQuestions[currentQuestionIndex],
         codeInput,
         jobRole
       ).then(result => {
@@ -152,27 +188,40 @@ export const useInterviewState = ({
           feedback: result.feedback
         };
         setEvaluations(updatedEvaluations);
+        setIsWaiting(false);
+        setShowCodeInput(false);
+        
+        if (currentQuestionIndex === questions.length - 1) {
+          setIsInterviewComplete(true);
+        }
+      }).catch(error => {
+        console.error("Error evaluating code answer:", error);
+        setIsWaiting(false);
+        setShowCodeInput(false);
+        
+        const updatedEvaluations = [...evaluations];
+        updatedEvaluations[currentQuestionIndex] = {
+          score: 5,
+          feedback: "We'll provide detailed feedback at the end of the interview."
+        };
+        setEvaluations(updatedEvaluations);
       });
-      
-      setShowCodeInput(false);
-      
-      if (currentQuestionIndex === questions.length - 1) {
-        setIsInterviewComplete(true);
-      }
     } catch (error) {
       console.error("Error evaluating code answer:", error);
+      setIsWaiting(false);
+      setShowCodeInput(false);
+      
       const updatedEvaluations = [...evaluations];
       updatedEvaluations[currentQuestionIndex] = {
         score: 5,
         feedback: "We'll provide detailed feedback at the end of the interview."
       };
       setEvaluations(updatedEvaluations);
-      setShowCodeInput(false);
     }
   };
   
   const handleFinishInterview = () => {
-    sessionStorage.setItem('interviewQuestions', JSON.stringify(questions));
+    sessionStorage.setItem('interviewQuestions', JSON.stringify(cleanedQuestions));
     sessionStorage.setItem('interviewAnswers', JSON.stringify(answers));
     sessionStorage.setItem('interviewEvaluations', JSON.stringify(evaluations));
     
