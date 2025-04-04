@@ -54,7 +54,10 @@ const FeedbackPage: React.FC = () => {
         setAnswers(answersList);
         
         if (evaluationsJSON) {
-          setEvaluations(JSON.parse(evaluationsJSON));
+          const parsedEvaluations = JSON.parse(evaluationsJSON);
+          // Filter out any null evaluations
+          const validEvaluations = parsedEvaluations.filter(eval => eval && typeof eval === 'object' && eval.score !== undefined);
+          setEvaluations(validEvaluations);
         }
         
         const result = await analyzeInterviewResponses(
@@ -97,9 +100,10 @@ const FeedbackPage: React.FC = () => {
     );
   }
   
-  // Calculate average question score
-  const averageScore = evaluations.length > 0 
-    ? evaluations.reduce((sum, evaluation) => sum + evaluation.score, 0) / evaluations.length
+  // Calculate average question score - with null safety
+  const validEvaluations = evaluations.filter(e => e && typeof e === 'object' && typeof e.score === 'number');
+  const averageScore = validEvaluations.length > 0 
+    ? validEvaluations.reduce((sum, evaluation) => sum + evaluation.score, 0) / validEvaluations.length
     : 0;
   
   // Helper function to get score color class
@@ -198,7 +202,7 @@ const FeedbackPage: React.FC = () => {
           </div>
           
           {/* Question-by-Question Feedback Table */}
-          {evaluations.length > 0 && questions.length > 0 && (
+          {validEvaluations.length > 0 && questions.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-3">
                 <LineChart className="h-5 w-5 text-primary" />
@@ -215,26 +219,30 @@ const FeedbackPage: React.FC = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {questions.map((question, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{index + 1}</TableCell>
-                        <TableCell>
-                          <p className="font-medium text-sm">{question}</p>
-                          {evaluations[index] && (
+                    {questions.map((question, index) => {
+                      // Safely check if we have a valid evaluation for this question
+                      const evaluation = evaluations[index];
+                      const hasValidEvaluation = evaluation && typeof evaluation === 'object' && typeof evaluation.score === 'number';
+                      
+                      return (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{index + 1}</TableCell>
+                          <TableCell>
+                            <p className="font-medium text-sm">{question}</p>
                             <div className="mt-2">
                               <p className="text-xs text-muted-foreground mb-1">Your answer:</p>
                               <p className="text-sm text-muted-foreground">{answers[index] || "No answer provided"}</p>
                               
-                              {evaluations[index].feedback && (
+                              {hasValidEvaluation && evaluation.feedback && (
                                 <div className="mt-3 p-3 bg-muted/50 rounded-md">
                                   <p className="text-xs font-medium mb-1">Feedback:</p>
                                   <div className="text-sm">
-                                    {evaluations[index].score >= 8 ? (
+                                    {evaluation.score >= 8 ? (
                                       <div className="flex gap-2 items-start mb-1.5">
                                         <Check className="h-4 w-4 text-green-600 mt-0.5" />
                                         <p>
                                           <span className="font-medium">Strengths:</span>{" "}
-                                          {evaluations[index].feedback.split('.')[0]}.
+                                          {evaluation.feedback.split('.')[0]}.
                                         </p>
                                       </div>
                                     ) : (
@@ -242,7 +250,7 @@ const FeedbackPage: React.FC = () => {
                                         <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
                                         <p>
                                           <span className="font-medium">Areas for improvement:</span>{" "}
-                                          {evaluations[index].feedback}
+                                          {evaluation.feedback}
                                         </p>
                                       </div>
                                     )}
@@ -250,27 +258,27 @@ const FeedbackPage: React.FC = () => {
                                 </div>
                               )}
                             </div>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {evaluations[index] ? (
-                            <div className="flex flex-col items-center">
-                              <span className={cn("font-medium", getScoreColorClass(evaluations[index].score))}>
-                                {evaluations[index].score}/10
-                              </span>
-                              <div className="w-16 h-2 bg-gray-200 rounded-full mt-1.5">
-                                <div
-                                  className={cn("h-2 rounded-full", getScoreBackgroundClass(evaluations[index].score))}
-                                  style={{ width: `${evaluations[index].score * 10}%` }}
-                                ></div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            {hasValidEvaluation ? (
+                              <div className="flex flex-col items-center">
+                                <span className={cn("font-medium", getScoreColorClass(evaluation.score))}>
+                                  {evaluation.score}/10
+                                </span>
+                                <div className="w-16 h-2 bg-gray-200 rounded-full mt-1.5">
+                                  <div
+                                    className={cn("h-2 rounded-full", getScoreBackgroundClass(evaluation.score))}
+                                    style={{ width: `${evaluation.score * 10}%` }}
+                                  ></div>
+                                </div>
                               </div>
-                            </div>
-                          ) : (
-                            "-"
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                            ) : (
+                              "-"
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
