@@ -26,11 +26,11 @@ interface UseSpeechControlReturn {
 }
 
 const waitingMessages = [
-  "Analyzing your response with data expertise...",
-  "Evaluating your data knowledge...",
-  "Processing your technical answer...",
-  "Assessing your approach to data problems...",
-  "Analyzing your methodology..."
+  "Processing your response...",
+  "Analyzing your answer...",
+  "Recording your response...",
+  "Capturing your answer...",
+  "Saving your response..."
 ];
 
 export const useSpeechControl = ({

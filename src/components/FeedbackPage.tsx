@@ -1,15 +1,27 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, Award, Check, AlertTriangle, BarChart4, LineChart } from 'lucide-react';
 import { analyzeInterviewResponses } from '@/services/aiService';
 import Button from './Button';
 import { toast } from '@/components/ui/use-toast';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 const FeedbackPage: React.FC = () => {
   const [feedback, setFeedback] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [overallScore, setOverallScore] = useState<number | null>(null);
   const [evaluations, setEvaluations] = useState<Array<{score: number; feedback: string}>>([]);
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<string[]>([]);
   const [jobRole, setJobRole] = useState<string>('');
   const navigate = useNavigate();
 
@@ -34,16 +46,18 @@ const FeedbackPage: React.FC = () => {
         
         setJobRole(role);
         
-        const questions = JSON.parse(questionsJSON);
-        const answers = JSON.parse(answersJSON);
+        const questionsList = JSON.parse(questionsJSON);
+        const answersList = JSON.parse(answersJSON);
+        setQuestions(questionsList);
+        setAnswers(answersList);
         
         if (evaluationsJSON) {
           setEvaluations(JSON.parse(evaluationsJSON));
         }
         
         const result = await analyzeInterviewResponses(
-          questions,
-          answers,
+          questionsList,
+          answersList,
           role,
           resume
         );
@@ -143,31 +157,64 @@ const FeedbackPage: React.FC = () => {
             )}
           </div>
           
-          {/* Question Performance Summary */}
-          {evaluations.length > 0 && (
-            <div className="mb-8 p-4 bg-secondary/20 rounded-lg">
+          {/* Question-by-Question Feedback Table */}
+          {evaluations.length > 0 && questions.length > 0 && (
+            <div className="mb-8">
               <div className="flex items-center gap-2 mb-3">
                 <LineChart className="h-5 w-5 text-primary" />
-                <h3 className="font-medium">Question-by-Question Performance</h3>
+                <h3 className="font-medium">Question-by-Question Feedback</h3>
               </div>
-              <div className="space-y-3">
-                {evaluations.map((evaluation, index) => (
-                  <div key={index} className="flex items-center">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium mr-3">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="h-2 bg-gray-200 rounded-full">
-                        <div
-                          className="h-2 bg-primary rounded-full"
-                          style={{ width: `${evaluation.score * 10}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                    <span className="ml-3 text-sm font-medium">{evaluation.score}/10</span>
-                  </div>
-                ))}
+              
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">#</TableHead>
+                      <TableHead>Question</TableHead>
+                      <TableHead className="w-16 text-center">Score</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {questions.map((question, index) => (
+                      <TableRow key={index}>
+                        <TableCell className="font-medium">{index + 1}</TableCell>
+                        <TableCell>
+                          <p className="font-medium text-sm">{question}</p>
+                          {evaluations[index] && (
+                            <div className="mt-2">
+                              <p className="text-xs text-muted-foreground mb-1">Your answer:</p>
+                              <p className="text-sm text-muted-foreground">{answers[index] || "No answer provided"}</p>
+                              
+                              {evaluations[index].feedback && (
+                                <div className="mt-2 p-2 bg-muted/50 rounded-md">
+                                  <p className="text-xs font-medium mb-1">Feedback:</p>
+                                  <p className="text-sm">{evaluations[index].feedback}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {evaluations[index] ? (
+                            <div className="flex flex-col items-center">
+                              <span className="font-medium">{evaluations[index].score}/10</span>
+                              <div className="w-8 h-1 bg-gray-200 rounded-full mt-1">
+                                <div
+                                  className="h-1 bg-primary rounded-full"
+                                  style={{ width: `${evaluations[index].score * 10}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          ) : (
+                            "-"
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
+              
               <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Average Score</span>
                 <span className="font-medium">{averageScore.toFixed(1)}/10</span>

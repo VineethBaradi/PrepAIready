@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { evaluateAnswer } from '@/services/aiService';
 
 const waitingMessages = [
-  "Analyzing your response with data expertise...",
-  "Evaluating your data knowledge...",
-  "Processing your technical answer...",
-  "Assessing your approach to data problems...",
-  "Analyzing your methodology..."
+  "Processing your response...",
+  "Analyzing your answer...",
+  "Recording your response...",
+  "Capturing your answer...",
+  "Saving your response..."
 ];
 
 interface UseInterviewStateProps {
@@ -100,8 +100,8 @@ export const useInterviewState = ({
       console.error("Error evaluating answer:", error);
       const updatedEvaluations = [...evaluations];
       updatedEvaluations[currentQuestionIndex] = {
-        score: 7,
-        feedback: "Your answer shows good understanding. Consider adding more specific technical examples."
+        score: 5,
+        feedback: "We'll provide detailed feedback at the end of the interview."
       };
       setEvaluations(updatedEvaluations);
     }
