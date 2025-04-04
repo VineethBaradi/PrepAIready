@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Code } from 'lucide-react';
-import Button from '../Button';
+import { Button } from '../ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { isCodingQuestion } from '@/utils/codingQuestionDetector';
 
 interface AnswerAreaProps {
   transcript: string;
@@ -22,11 +23,16 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
   showCodeInput = false,
   onToggleCodeInput
 }) => {
-  const question = sessionStorage.getItem('currentQuestion') || '';
-  const needsCodeInput = question.toLowerCase().includes('sql') || 
-                         question.toLowerCase().includes('python') ||
-                         question.toLowerCase().includes('code') || 
-                         question.toLowerCase().includes('write');
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const currentQuestion = sessionStorage.getItem('currentQuestion') || '';
+  const needsCodeInput = isCodingQuestion(currentQuestion);
+  
+  // Auto-scroll to bottom when transcript changes
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [transcript]);
 
   return (
     <div 
@@ -59,15 +65,15 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
           </div>
         </div>
       ) : transcript ? (
-        <ScrollArea className="h-full max-h-[300px] pr-4">
-          <div>
-            <p>{transcript}</p>
+        <ScrollArea className="h-full max-h-[300px]">
+          <div className="pr-4" ref={scrollRef}>
+            <p className="whitespace-pre-wrap">{transcript}</p>
           </div>
         </ScrollArea>
       ) : (
         <p className="text-muted-foreground text-center my-8">
           {isRecording 
-            ? "Listening... Speak your answer to the data question" 
+            ? "Listening... Speak your answer to the question" 
             : "Click the microphone button to start answering"
           }
         </p>

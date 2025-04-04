@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Mic, MicOff, ChevronRight } from 'lucide-react';
-import Button from '../Button';
+import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 
 interface RecordingControlsProps {
@@ -29,10 +29,10 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
     <div className="flex items-center justify-between">
       <div className="flex items-center">
         <Button 
-          variant={isRecording ? "primary" : "outline"} 
-          size="lg" 
+          variant={isRecording ? "destructive" : "default"} 
+          size="icon" 
           onClick={onToggleRecording} 
-          className={cn("rounded-full h-12 w-12 p-0", isRecording && "bg-primary text-white")}
+          className={cn("rounded-full h-12 w-12", isRecording && "animate-pulse")}
           disabled={isWaiting}
         >
           {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
@@ -45,10 +45,10 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
         <Button 
           variant="secondary" 
           onClick={onNextQuestion} 
-          rightIcon={<ChevronRight className="h-4 w-4" />} 
-          className="mx-[15px]"
+          className="mx-[15px] flex items-center gap-2"
         >
           Next Question
+          <ChevronRight className="h-4 w-4" />
         </Button>
       )}
     </div>

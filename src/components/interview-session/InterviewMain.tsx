@@ -8,6 +8,7 @@ import { AnswerArea } from '../interview/AnswerArea';
 import { CodeInputArea } from '../interview/CodeInputArea';
 import { RecordingControls } from '../interview/RecordingControls';
 import { InterviewComplete } from '../interview/InterviewComplete';
+import { cleanQuestionText } from '@/utils/questionUtils';
 
 interface InterviewMainProps {
   questions: string[];
@@ -57,15 +58,20 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     setLocalShowCodeInput(showCodeInput);
   }, [isWaiting, waitingMessage, showCodeInput]);
   
-  // Use cleaned questions if available, otherwise use the original questions
-  const displayQuestions = cleanedQuestions.length > 0 ? cleanedQuestions : questions;
-  const currentQuestion = displayQuestions[currentQuestionIndex];
+  // Use cleaned questions if available, otherwise clean them now
+  const displayQuestions = cleanedQuestions.length > 0 
+    ? cleanedQuestions 
+    : questions.map(cleanQuestionText);
+  
+  const currentQuestion = displayQuestions[currentQuestionIndex] || "";
   
   // Store current question in sessionStorage for AnswerArea to check
   useEffect(() => {
     if (currentQuestion) {
       sessionStorage.setItem('currentQuestion', currentQuestion);
     }
+    // Clean up console logs
+    console.log("Current question:", currentQuestion);
   }, [currentQuestion]);
 
   const {
@@ -95,10 +101,12 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
 
   // Reset transcript when moving to next question
   useEffect(() => {
+    console.log("Current question index changed, resetting transcript");
     resetTranscript();
   }, [currentQuestionIndex, resetTranscript]);
 
   const handleToggleRecording = () => {
+    console.log("Toggling recording");
     if (isRecording) {
       stopTimer();
     } else {
@@ -113,10 +121,17 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
   };
 
   const handleNextWithReset = () => {
+    console.log("Handling next question with reset");
     // Clear transcript first
     resetTranscript();
     // Then go to next question
     handleNextQuestion();
+    
+    // Notify the user
+    toast({
+      title: "Next Question",
+      description: "Moving to the next question"
+    });
   };
 
   useEffect(() => {

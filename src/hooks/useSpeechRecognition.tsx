@@ -32,18 +32,19 @@ export function useSpeechRecognition({
         
         recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           let interimTranscript = '';
-          let finalTranscript = '';
+          let finalTranscript = transcript; // Start with existing transcript
           
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
+            const result = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
-              finalTranscript += transcript + ' ';
+              finalTranscript += result + ' ';
             } else {
-              interimTranscript += transcript;
+              interimTranscript += result;
             }
           }
           
-          const newTranscript = finalTranscript || interimTranscript || transcript;
+          const newTranscript = finalTranscript;
+          console.log("Speech recognition result:", newTranscript);
           setTranscript(newTranscript);
           if (onTranscriptChange) {
             onTranscriptChange(newTranscript);
@@ -52,6 +53,17 @@ export function useSpeechRecognition({
         
         recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
           console.error('Speech recognition error', event.error);
+          // Try to restart on error
+          if (isRecording) {
+            try {
+              stopRecognition();
+              setTimeout(() => {
+                startRecognition();
+              }, 1000);
+            } catch (e) {
+              console.error("Failed to restart recognition", e);
+            }
+          }
         };
       }
     }
@@ -65,6 +77,7 @@ export function useSpeechRecognition({
     if (recognitionRef.current) {
       try {
         recognitionRef.current.start();
+        console.log("Speech recognition started");
         setRecognitionActive(true);
       } catch (error) {
         console.error('Failed to start speech recognition:', error);
@@ -76,6 +89,7 @@ export function useSpeechRecognition({
     if (recognitionRef.current && recognitionActive) {
       try {
         recognitionRef.current.stop();
+        console.log("Speech recognition stopped");
         setRecognitionActive(false);
       } catch (error) {
         console.error('Failed to stop speech recognition:', error);
@@ -84,16 +98,19 @@ export function useSpeechRecognition({
   };
   
   const startRecording = () => {
+    console.log("Starting recording in hook");
     setIsRecording(true);
     startRecognition();
   };
   
   const stopRecording = () => {
+    console.log("Stopping recording in hook");
     setIsRecording(false);
     stopRecognition();
   };
   
   const resetTranscript = () => {
+    console.log("Resetting transcript");
     setTranscript("");
   };
 
