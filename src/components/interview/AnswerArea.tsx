@@ -46,7 +46,7 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
       {needsCodeInput && onToggleCodeInput && (
         <div className="absolute top-2 right-2 z-10">
           <Button
-            variant={showCodeInput ? "primary" : "outline"} 
+            variant={showCodeInput ? "default" : "outline"} 
             size="sm"
             onClick={onToggleCodeInput}
             className="flex items-center gap-1 px-2 py-1"
