@@ -77,10 +77,10 @@ export const useSpeechControl = ({
     }
   };
   
-  const toggleMute = () => {
+  const toggleMute = (): boolean => {
     const newMuteState = toggleSpeechMute();
     
-    if (!newMuteState && readAloud) {
+    if (!newMuteState && typeof readAloud === 'function') {
       readAloud(currentQuestion);
     }
     

@@ -6,7 +6,7 @@ interface UseSpeechSynthesisReturn {
   isMuted: boolean;
   readAloud: (text: string) => void;
   stopSpeech: () => void;
-  toggleMute: () => void;
+  toggleMute: () => boolean;
 }
 
 export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
@@ -47,7 +47,7 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
     speechSynthesisRef.current = null;
   };
   
-  const toggleMute = () => {
+  const toggleMute = (): boolean => {
     const newMuteState = !isMuted;
     setIsMuted(newMuteState);
     
