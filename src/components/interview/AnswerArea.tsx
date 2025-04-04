@@ -2,25 +2,18 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-interface EvaluationResult {
-  score: number;
-  feedback: string;
-}
-
 interface AnswerAreaProps {
   transcript: string;
   isRecording: boolean;
   isWaiting: boolean;
   waitingMessage: string;
-  evaluation: EvaluationResult | null;
 }
 
 export const AnswerArea: React.FC<AnswerAreaProps> = ({
   transcript,
   isRecording,
   isWaiting,
-  waitingMessage,
-  evaluation
+  waitingMessage
 }) => {
   return (
     <div 

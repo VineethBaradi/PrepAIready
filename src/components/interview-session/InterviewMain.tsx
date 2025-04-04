@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTimer } from '@/hooks/useTimer';
 import { toast } from '@/components/ui/use-toast';
@@ -54,7 +53,6 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
   }, [isWaiting, waitingMessage]);
   
   const currentQuestion = questions[currentQuestionIndex];
-  const currentEvaluation = evaluations[currentQuestionIndex] || null;
 
   const {
     transcript,
@@ -123,7 +121,6 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
               isRecording={isRecording}
               isWaiting={localIsWaiting}
               waitingMessage={localWaitingMessage}
-              evaluation={currentEvaluation}
             />
             
             <RecordingControls 
