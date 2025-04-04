@@ -33,7 +33,6 @@ const InterviewSession: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   
-  // Add new state for speech recognition
   const [recognitionActive, setRecognitionActive] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   
@@ -61,10 +60,9 @@ const InterviewSession: React.FC = () => {
         const generatedQuestions = await generateInterviewQuestions({
           resume: resumeContent,
           jobRole: jobRole,
-          count: 8 // You can adjust the number of questions
+          count: 8
         });
         
-        // If we got fewer than expected questions, we're probably using fallbacks
         if (generatedQuestions.length < 5) {
           setUsingFallbackQuestions(true);
         }
@@ -87,7 +85,6 @@ const InterviewSession: React.FC = () => {
     
     fetchQuestions();
     
-    // Initialize speech recognition if available
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (SpeechRecognitionAPI) {
@@ -124,7 +121,6 @@ const InterviewSession: React.FC = () => {
       });
     }
     
-    // Clean up timers when component unmounts
     return () => {
       if (timerRef.current) {
         clearInterval(timerRef.current);
@@ -137,7 +133,6 @@ const InterviewSession: React.FC = () => {
     };
   }, [navigate]);
   
-  // Read the current question aloud
   useEffect(() => {
     if (!isLoading && questions.length > 0 && !isMuted) {
       readQuestionAloud(questions[currentQuestionIndex]);
@@ -147,27 +142,21 @@ const InterviewSession: React.FC = () => {
   const readQuestionAloud = (text: string) => {
     if (isMuted) return;
     
-    // Cancel any ongoing speech
     stopSpeech();
     
-    // Create a new speech utterance
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = 1;
     utterance.pitch = 1;
     
-    // Store the utterance in the ref so we can cancel it later if needed
     speechSynthesisRef.current = utterance;
     
-    // Set speaking state
     setIsSpeaking(true);
     
-    // Add event listener for when speech ends
     utterance.onend = () => {
       setIsSpeaking(false);
       speechSynthesisRef.current = null;
     };
     
-    // Speak
     window.speechSynthesis.speak(utterance);
   };
   
@@ -188,7 +177,6 @@ const InterviewSession: React.FC = () => {
     }
   };
   
-  // Start speech recognition
   const startRecognition = () => {
     if (recognitionRef.current) {
       try {
@@ -200,7 +188,6 @@ const InterviewSession: React.FC = () => {
     }
   };
   
-  // Stop speech recognition
   const stopRecognition = () => {
     if (recognitionRef.current && recognitionActive) {
       try {
@@ -212,7 +199,6 @@ const InterviewSession: React.FC = () => {
     }
   };
   
-  // Start/stop recording
   const toggleRecording = () => {
     if (isRecording) {
       stopRecording();
@@ -224,12 +210,10 @@ const InterviewSession: React.FC = () => {
   const startRecording = () => {
     setIsRecording(true);
     setTimer(0);
-    setTranscript(""); // Clear previous transcript
+    setTranscript("");
     
-    // Stop any ongoing speech when recording starts
     stopSpeech();
     
-    // Start speech recognition
     startRecognition();
     
     if (timerRef.current) {
@@ -240,17 +224,14 @@ const InterviewSession: React.FC = () => {
       setTimer(prev => prev + 1);
     }, 1000);
   };
-
+  
   const processAnswer = async (answer: string) => {
-    // Save the answer
     const updatedAnswers = [...answers];
     updatedAnswers[currentQuestionIndex] = answer;
     setAnswers(updatedAnswers);
     
-    // Get the current job role
     const jobRole = sessionStorage.getItem('jobRole') || 'Data Analyst';
     
-    // Evaluate the answer
     try {
       const result = await evaluateAnswer(
         questions[currentQuestionIndex],
@@ -258,26 +239,31 @@ const InterviewSession: React.FC = () => {
         jobRole
       );
       
-      // Save the evaluation
+      let normalizedScore = result.score;
+      if (normalizedScore > 10) {
+        normalizedScore = Math.round(normalizedScore / 10);
+      }
+      
+      normalizedScore = Math.max(0, Math.min(10, normalizedScore));
+      
       const updatedEvaluations = [...evaluations];
-      updatedEvaluations[currentQuestionIndex] = result;
+      updatedEvaluations[currentQuestionIndex] = {
+        score: normalizedScore,
+        feedback: result.feedback
+      };
       setEvaluations(updatedEvaluations);
       
-      // For coding questions, show code input instead
       if (questions[currentQuestionIndex]?.toLowerCase().includes("code") || 
           questions[currentQuestionIndex]?.toLowerCase().includes("sql") ||
           questions[currentQuestionIndex]?.toLowerCase().includes("python")) {
         setShowCodeInput(true);
       }
       
-      // If this was the last question, end the interview
       if (currentQuestionIndex === questions.length - 1) {
         setIsInterviewComplete(true);
       }
-      
     } catch (error) {
       console.error("Error evaluating answer:", error);
-      // Generate a simulated evaluation for fallback
       const updatedEvaluations = [...evaluations];
       updatedEvaluations[currentQuestionIndex] = {
         score: 7,
@@ -290,7 +276,6 @@ const InterviewSession: React.FC = () => {
   const stopRecording = () => {
     setIsRecording(false);
     
-    // Stop the speech recognition
     stopRecognition();
     
     if (timerRef.current) {
@@ -298,7 +283,6 @@ const InterviewSession: React.FC = () => {
       timerRef.current = null;
     }
     
-    // Use the transcribed text instead of a simulated answer
     const userAnswer = transcript.trim();
     
     if (!userAnswer) {
@@ -310,11 +294,9 @@ const InterviewSession: React.FC = () => {
       return;
     }
     
-    // Evaluate the answer
     setIsWaiting(true);
     setWaitingMessage(waitingMessages[Math.floor(Math.random() * waitingMessages.length)]);
     
-    // Process the user's actual answer
     waitingTimerRef.current = window.setTimeout(() => {
       setIsWaiting(false);
       processAnswer(userAnswer);
@@ -322,12 +304,10 @@ const InterviewSession: React.FC = () => {
   };
   
   const handleNextQuestion = () => {
-    // Save all information for analysis
     sessionStorage.setItem('interviewQuestions', JSON.stringify(questions));
     sessionStorage.setItem('interviewAnswers', JSON.stringify(answers));
     sessionStorage.setItem('interviewEvaluations', JSON.stringify(evaluations));
     
-    // Move to the next question
     setCurrentQuestionIndex(prev => prev + 1);
     setTranscript("");
     setShowCodeInput(false);
@@ -335,13 +315,11 @@ const InterviewSession: React.FC = () => {
   };
   
   const handleSubmitCode = () => {
-    // Process the code answer
     processAnswer(codeInput);
     setShowCodeInput(false);
   };
   
   const handleFinishInterview = () => {
-    // Save all information for analysis
     sessionStorage.setItem('interviewQuestions', JSON.stringify(questions));
     sessionStorage.setItem('interviewAnswers', JSON.stringify(answers));
     sessionStorage.setItem('interviewEvaluations', JSON.stringify(evaluations));
@@ -349,14 +327,12 @@ const InterviewSession: React.FC = () => {
     navigate('/feedback');
   };
   
-  // Format timer display
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
   
-  // If still loading questions
   if (isLoading) {
     return (
       <div className="min-h-screen pt-24 pb-16 px-6 flex flex-col items-center justify-center">
@@ -368,7 +344,6 @@ const InterviewSession: React.FC = () => {
     );
   }
   
-  // If no questions were generated
   if (questions.length === 0) {
     return (
       <div className="min-h-screen pt-24 pb-16 px-6 flex flex-col items-center justify-center">
@@ -397,7 +372,6 @@ const InterviewSession: React.FC = () => {
           </div>
         )}
         
-        {/* Interview progress */}
         <div className="mb-8 animate-slide-down">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-medium">Data Interview Progress</h2>
@@ -415,9 +389,7 @@ const InterviewSession: React.FC = () => {
           </div>
         </div>
         
-        {/* Main interview area */}
         <div className="flex-1 flex flex-col glass-card">
-          {/* AI question */}
           <div className="mb-6 animate-fade-in">
             <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 relative">
               <div className="flex justify-between items-center mb-2">
@@ -452,7 +424,6 @@ const InterviewSession: React.FC = () => {
             </div>
           </div>
           
-          {/* User response area */}
           <div className="flex-1 flex flex-col">
             {isInterviewComplete ? (
               <div className="flex-1 flex flex-col items-center justify-center animate-fade-in">
