@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTimer } from '@/hooks/useTimer';
 import { toast } from '@/components/ui/use-toast';
@@ -45,14 +46,23 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
 }) => {
   const [localIsWaiting, setLocalIsWaiting] = useState(isWaiting);
   const [localWaitingMessage, setLocalWaitingMessage] = useState(waitingMessage);
+  const [localShowCodeInput, setLocalShowCodeInput] = useState(showCodeInput);
   const { timer, startTimer, stopTimer, resetTimer, formatTime } = useTimer();
 
   useEffect(() => {
     setLocalIsWaiting(isWaiting);
     setLocalWaitingMessage(waitingMessage);
-  }, [isWaiting, waitingMessage]);
+    setLocalShowCodeInput(showCodeInput);
+  }, [isWaiting, waitingMessage, showCodeInput]);
   
   const currentQuestion = questions[currentQuestionIndex];
+  
+  // Store current question in sessionStorage for AnswerArea to check
+  useEffect(() => {
+    if (currentQuestion) {
+      sessionStorage.setItem('currentQuestion', currentQuestion);
+    }
+  }, [currentQuestion]);
 
   const {
     transcript,
@@ -88,6 +98,10 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     toggleRecording();
   };
 
+  const handleToggleCodeInput = () => {
+    setLocalShowCodeInput(prev => !prev);
+  };
+
   useEffect(() => {
     return () => {
       if (waitingTimerRef.current) {
@@ -108,7 +122,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
       <div className="flex-1 flex flex-col">
         {isInterviewComplete ? (
           <InterviewComplete onFinishInterview={handleFinishInterview} />
-        ) : showCodeInput ? (
+        ) : localShowCodeInput ? (
           <CodeInputArea 
             codeInput={codeInput}
             onCodeChange={setCodeInput}
@@ -121,6 +135,8 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
               isRecording={isRecording}
               isWaiting={localIsWaiting}
               waitingMessage={localWaitingMessage}
+              showCodeInput={localShowCodeInput}
+              onToggleCodeInput={handleToggleCodeInput}
             />
             
             <RecordingControls 

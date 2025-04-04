@@ -78,7 +78,8 @@ Steps to Follow:
     try {
       const content = data.choices[0].message.content;
       // Try to parse as JSON if the model returned a JSON string
-      questions = JSON.parse(content);
+      const parsedContent = JSON.parse(content);
+      questions = Array.isArray(parsedContent) ? parsedContent : []; 
     } catch (e) {
       // If parsing fails, try to extract questions by line
       const content = data.choices[0].message.content;
@@ -92,6 +93,19 @@ Steps to Follow:
     if (questions.length === 0) {
       throw new Error("Failed to parse questions from API response");
     }
+
+    // Clean up questions - remove JSON formatting, headers, etc.
+    questions = questions.map(question => {
+      // Remove JSON formatting indicators, headers, and annotations
+      return question
+        .replace(/```json|```|^\[|\]$|^"?|"?$/g, '')
+        .replace(/^\/\/ \w+ Questions \(\d+%\):/i, '')
+        .replace(/^\d+\.\s*/, '')
+        .trim();
+    });
+    
+    // Filter out any empty questions
+    questions = questions.filter(q => q && q.length > 5);
 
     // Ensure we have at least a few technical coding questions
     if (!questions.some(q => q.toLowerCase().includes('sql') || q.toLowerCase().includes('query'))) {

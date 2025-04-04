@@ -34,6 +34,19 @@ interface UseInterviewStateReturn {
   handleFinishInterview: () => void;
 }
 
+// Helper function to detect if a question requires code input
+const isCodingQuestion = (question: string): boolean => {
+  const lowerQuestion = question.toLowerCase();
+  return (
+    (lowerQuestion.includes('sql') && (lowerQuestion.includes('query') || lowerQuestion.includes('write'))) ||
+    (lowerQuestion.includes('python') && (lowerQuestion.includes('write') || lowerQuestion.includes('implement') || lowerQuestion.includes('create'))) ||
+    lowerQuestion.includes('coding') ||
+    (lowerQuestion.includes('code') && lowerQuestion.includes('write')) ||
+    lowerQuestion.includes('implement a function') ||
+    lowerQuestion.includes('write a function')
+  );
+};
+
 export const useInterviewState = ({
   questions,
   answers,
@@ -56,6 +69,10 @@ export const useInterviewState = ({
     sessionStorage.setItem('interviewAnswers', JSON.stringify(answers));
     sessionStorage.setItem('interviewEvaluations', JSON.stringify(evaluations));
     
+    // Reset code input state for next question
+    setShowCodeInput(false);
+    setCodeInput("");
+    
     setCurrentQuestionIndex(prev => prev + 1);
   };
   
@@ -68,17 +85,15 @@ export const useInterviewState = ({
     
     try {
       // Check for SQL or Python coding questions before evaluation
-      const currentQuestion = questions[currentQuestionIndex].toLowerCase();
-      if ((currentQuestion.includes('sql') && currentQuestion.includes('query')) || 
-          (currentQuestion.includes('write') && (currentQuestion.includes('sql') || currentQuestion.includes('python'))) || 
-          currentQuestion.includes('coding') || 
-          currentQuestion.includes('code')) {
+      const currentQuestion = questions[currentQuestionIndex];
+      
+      if (isCodingQuestion(currentQuestion)) {
         setShowCodeInput(true);
         return;
       }
       
       const result = await evaluateAnswer(
-        questions[currentQuestionIndex],
+        currentQuestion,
         answer,
         jobRole
       );
