@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
@@ -13,9 +12,8 @@ import { CodeInputArea } from './interview/CodeInputArea';
 import { RecordingControls } from './interview/RecordingControls';
 import { ProgressDisplay } from './interview/ProgressDisplay';
 import { InterviewComplete } from './interview/InterviewComplete';
-import Button from './Button'; // Add the import for Button
+import Button from './Button';
 
-// Improved waiting messages for data interviews
 const waitingMessages = [
   "Analyzing your response with data expertise...",
   "Evaluating your data knowledge...",
@@ -99,8 +97,9 @@ const InterviewSession: React.FC = () => {
   
   useEffect(() => {
     if (!isLoading && questions.length > 0 && !isMuted) {
-      // Fix: Don't test void expression for truthiness
-      readAloud(questions[currentQuestionIndex]);
+      if (typeof readAloud === 'function') {
+        readAloud(questions[currentQuestionIndex]);
+      }
     }
   }, [currentQuestionIndex, questions, isLoading, isMuted, readAloud]);
   
