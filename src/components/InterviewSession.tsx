@@ -13,6 +13,7 @@ import { CodeInputArea } from './interview/CodeInputArea';
 import { RecordingControls } from './interview/RecordingControls';
 import { ProgressDisplay } from './interview/ProgressDisplay';
 import { InterviewComplete } from './interview/InterviewComplete';
+import Button from './Button'; // Add the import for Button
 
 // Improved waiting messages for data interviews
 const waitingMessages = [
@@ -98,6 +99,7 @@ const InterviewSession: React.FC = () => {
   
   useEffect(() => {
     if (!isLoading && questions.length > 0 && !isMuted) {
+      // Fix: Don't test void expression for truthiness
       readAloud(questions[currentQuestionIndex]);
     }
   }, [currentQuestionIndex, questions, isLoading, isMuted, readAloud]);
