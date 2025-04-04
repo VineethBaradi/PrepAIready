@@ -24,6 +24,7 @@ const FeedbackPage: React.FC = () => {
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
   const [jobRole, setJobRole] = useState<string>('');
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -228,17 +229,21 @@ const FeedbackPage: React.FC = () => {
                                 <div className="mt-3 p-3 bg-muted/50 rounded-md">
                                   <p className="text-xs font-medium mb-1">Feedback:</p>
                                   <div className="text-sm">
-                                    {evaluations[index].score >= 8 && (
+                                    {evaluations[index].score >= 8 ? (
                                       <div className="flex gap-2 items-start mb-1.5">
                                         <Check className="h-4 w-4 text-green-600 mt-0.5" />
-                                        <p><span className="font-medium">Strengths:</span> {evaluations[index].feedback.split('.')[0]}.</p>
+                                        <p>
+                                          <span className="font-medium">Strengths:</span>{" "}
+                                          {evaluations[index].feedback.split('.')[0]}.
+                                        </p>
                                       </div>
-                                    )}
-                                    
-                                    {evaluations[index].score < 8 && (
+                                    ) : (
                                       <div className="flex gap-2 items-start mb-1.5">
                                         <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
-                                        <p><span className="font-medium">Areas for improvement:</span> {evaluations[index].feedback}</p>
+                                        <p>
+                                          <span className="font-medium">Areas for improvement:</span>{" "}
+                                          {evaluations[index].feedback}
+                                        </p>
                                       </div>
                                     )}
                                   </div>

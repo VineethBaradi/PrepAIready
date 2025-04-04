@@ -44,6 +44,7 @@ export const useSpeechControl = ({
 }: UseSpeechControlProps): UseSpeechControlReturn => {
   const { transcript, isRecording, startRecording: startSpeechRecognition, stopRecording: stopSpeechRecognition } = useSpeechRecognition({});
   const { isSpeaking, isMuted, readAloud, stopSpeech, toggleMute: toggleSpeechMute } = useSpeechSynthesis();
+  const lastReadQuestionRef = useRef<string>('');
   
   const handleStartRecording = () => {
     startSpeechRecognition();
@@ -82,8 +83,10 @@ export const useSpeechControl = ({
     return toggleSpeechMute();
   };
   
+  // Modified to only read a question once by tracking the last question read
   const readQuestion = (text: string) => {
-    if (typeof readAloud === 'function' && !isMuted) {
+    if (typeof readAloud === 'function' && !isMuted && text !== lastReadQuestionRef.current) {
+      lastReadQuestionRef.current = text;
       readAloud(text);
     }
   };

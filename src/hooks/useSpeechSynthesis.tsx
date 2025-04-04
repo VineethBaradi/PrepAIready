@@ -13,6 +13,7 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const spokenTextsRef = useRef<Set<string>>(new Set());
   
   useEffect(() => {
     return () => {
@@ -22,6 +23,9 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
   
   const readAloud = (text: string) => {
     if (isMuted) return;
+    
+    // Check if this text has already been spoken to prevent repetition
+    if (spokenTextsRef.current.has(text)) return;
     
     stopSpeech();
     
@@ -36,6 +40,8 @@ export function useSpeechSynthesis(): UseSpeechSynthesisReturn {
     utterance.onend = () => {
       setIsSpeaking(false);
       speechSynthesisRef.current = null;
+      // Add to set of spoken texts to prevent repetition
+      spokenTextsRef.current.add(text);
     };
     
     window.speechSynthesis.speak(utterance);
