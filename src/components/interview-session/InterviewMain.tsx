@@ -148,6 +148,11 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     };
   }, [waitingTimerRef]);
   
+  // Function to determine if we have a real transcript
+  const hasRealTranscript = () => {
+    return transcript && transcript.trim().length > 0;
+  };
+  
   return (
     <div className="flex-1 flex flex-col glass-card">
       <QuestionDisplay 
@@ -180,7 +185,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
             <RecordingControls 
               isRecording={isRecording}
               isWaiting={localIsWaiting}
-              hasTranscript={transcript && transcript.trim().length > 0}
+              hasTranscript={hasRealTranscript()}
               timer={timer}
               formatTime={formatTime}
               onToggleRecording={handleToggleRecording}

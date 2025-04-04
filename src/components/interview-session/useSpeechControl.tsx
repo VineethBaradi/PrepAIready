@@ -43,7 +43,7 @@ export const useSpeechControl = ({
     isRecording, 
     startRecording: startSpeechRecognition, 
     stopRecording: stopSpeechRecognition, 
-    resetTranscript 
+    resetTranscript: resetSpeechRecognitionTranscript
   } = useSpeechRecognition({
     onTranscriptChange: (newTranscript) => {
       console.log("Transcript updated in useSpeechControl:", newTranscript);
@@ -120,6 +120,12 @@ export const useSpeechControl = ({
     }
   };
   
+  const resetTranscript = () => {
+    console.log("Reset transcript called from useSpeechControl");
+    resetSpeechRecognitionTranscript();
+    setLocalTranscript('');
+  };
+  
   return {
     transcript: localTranscript, // Return the local transcript for consistency
     isRecording,
@@ -132,10 +138,6 @@ export const useSpeechControl = ({
     handleStartRecording,
     handleStopRecording,
     readQuestion,
-    resetTranscript: () => {
-      console.log("Reset transcript called from useSpeechControl");
-      resetTranscript();
-      setLocalTranscript('');
-    }
+    resetTranscript
   };
 };

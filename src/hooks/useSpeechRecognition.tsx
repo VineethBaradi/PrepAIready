@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 
 interface UseSpeechRecognitionProps {
@@ -21,7 +20,8 @@ export function useSpeechRecognition({
   const [isRecording, setIsRecording] = useState(false);
   const [recognitionActive, setRecognitionActive] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
-  
+  const fullTranscriptRef = useRef("");
+
   useEffect(() => {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
       const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -38,33 +38,24 @@ export function useSpeechRecognition({
             const result = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
               finalTranscript += result + ' ';
+              fullTranscriptRef.current += result + ' ';
             } else {
               interimTranscript += result;
             }
           }
           
-          // Use the final transcript if available, otherwise use the interim
-          const newText = finalTranscript || interimTranscript;
+          const completeTranscript = fullTranscriptRef.current + interimTranscript;
           
-          if (newText) {
-            // Update the transcript by appending the new text
-            setTranscript(prevTranscript => {
-              const updatedTranscript = prevTranscript + ' ' + newText;
-              console.log("Updated transcript:", updatedTranscript);
-              
-              // Notify through callback
-              if (onTranscriptChange) {
-                onTranscriptChange(updatedTranscript);
-              }
-              
-              return updatedTranscript;
-            });
+          setTranscript(completeTranscript);
+          console.log("Updated complete transcript:", completeTranscript);
+          
+          if (onTranscriptChange) {
+            onTranscriptChange(completeTranscript);
           }
         };
         
         recognitionRef.current.onerror = (event: SpeechRecognitionErrorEvent) => {
           console.error('Speech recognition error', event.error);
-          // Try to restart on error
           if (isRecording) {
             try {
               stopRecognition();
@@ -111,7 +102,8 @@ export function useSpeechRecognition({
   const startRecording = () => {
     console.log("Starting recording in hook");
     setIsRecording(true);
-    setTranscript(''); // Reset transcript when starting a new recording
+    fullTranscriptRef.current = '';
+    setTranscript('');
     startRecognition();
   };
   
@@ -124,6 +116,7 @@ export function useSpeechRecognition({
   const resetTranscript = () => {
     console.log("Resetting transcript");
     setTranscript("");
+    fullTranscriptRef.current = "";
   };
 
   return {

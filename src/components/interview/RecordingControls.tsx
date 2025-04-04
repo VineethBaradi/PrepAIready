@@ -46,6 +46,7 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
           variant="secondary" 
           onClick={onNextQuestion} 
           className="mx-[15px] flex items-center gap-2"
+          disabled={isWaiting}
         >
           Next Question
           <ChevronRight className="h-4 w-4" />
