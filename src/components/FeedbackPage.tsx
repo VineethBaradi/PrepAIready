@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, ArrowLeft, Award, Check, AlertTriangle, BarChart4, LineChart } from 'lucide-react';
@@ -55,8 +54,7 @@ const FeedbackPage: React.FC = () => {
         
         if (evaluationsJSON) {
           const parsedEvaluations = JSON.parse(evaluationsJSON);
-          // Filter out any null evaluations
-          const validEvaluations = parsedEvaluations.filter(eval => eval && typeof eval === 'object' && eval.score !== undefined);
+          const validEvaluations = parsedEvaluations.filter(item => item && typeof item === 'object' && item.score !== undefined);
           setEvaluations(validEvaluations);
         }
         
@@ -69,7 +67,6 @@ const FeedbackPage: React.FC = () => {
         
         setFeedback(result);
         
-        // Extract overall score if present
         const scoreMatch = result.match(/overall score:?\s*(\d+)/i);
         if (scoreMatch && scoreMatch[1]) {
           setOverallScore(parseInt(scoreMatch[1], 10));
@@ -100,38 +97,31 @@ const FeedbackPage: React.FC = () => {
     );
   }
   
-  // Calculate average question score - with null safety
   const validEvaluations = evaluations.filter(e => e && typeof e === 'object' && typeof e.score === 'number');
   const averageScore = validEvaluations.length > 0 
     ? validEvaluations.reduce((sum, evaluation) => sum + evaluation.score, 0) / validEvaluations.length
     : 0;
   
-  // Helper function to get score color class
   const getScoreColorClass = (score: number): string => {
     if (score >= 8) return "text-green-600";
     if (score >= 6) return "text-amber-600";
     return "text-red-600";
   };
   
-  // Helper function to get score background class
   const getScoreBackgroundClass = (score: number): string => {
     if (score >= 8) return "bg-green-500";
     if (score >= 6) return "bg-amber-500";
     return "bg-red-500";
   };
   
-  // Render feedback with proper formatting
   const renderFeedback = () => {
     if (!feedback) return null;
     
-    // Split the feedback into sections and paragraphs
     return feedback.split('\n\n').map((paragraph, index) => {
-      // Check if this paragraph is a heading
       const isHeading = paragraph.startsWith('#') || 
                         (/^[A-Z][\w\s]+:$/.test(paragraph)) || 
                         paragraph.length < 50 && paragraph.toUpperCase() === paragraph;
       
-      // Check if this paragraph is a list item
       const isListItem = paragraph.match(/^\d+\.\s/) || paragraph.match(/^\*\s/) || paragraph.match(/^-\s/);
       
       if (isHeading) {
@@ -201,7 +191,6 @@ const FeedbackPage: React.FC = () => {
             )}
           </div>
           
-          {/* Question-by-Question Feedback Table */}
           {validEvaluations.length > 0 && questions.length > 0 && (
             <div className="mb-8">
               <div className="flex items-center gap-2 mb-3">
@@ -220,7 +209,6 @@ const FeedbackPage: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {questions.map((question, index) => {
-                      // Safely check if we have a valid evaluation for this question
                       const evaluation = evaluations[index];
                       const hasValidEvaluation = evaluation && typeof evaluation === 'object' && typeof evaluation.score === 'number';
                       
