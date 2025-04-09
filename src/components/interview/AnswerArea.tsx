@@ -88,7 +88,7 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
         <div className="text-muted-foreground text-center my-8">
           Click the microphone button to start answering
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
