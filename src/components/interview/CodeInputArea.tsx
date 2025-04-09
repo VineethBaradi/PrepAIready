@@ -33,11 +33,6 @@ export const CodeInputArea: React.FC<CodeInputAreaProps> = ({
           <Button 
             type="submit"
             className="inline-flex items-center gap-2"
-            onClick={(e) => {
-              e.preventDefault();
-              console.log("Submit button clicked");
-              onSubmit();
-            }}
           >
             Submit Code
             <Send className="h-4 w-4" />

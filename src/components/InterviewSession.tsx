@@ -30,8 +30,7 @@ const InterviewSession: React.FC = () => {
     processAnswer,
     setCodeInput,
     handleSubmitCode,
-    handleFinishInterview,
-    cleanedQuestions
+    handleFinishInterview
   } = useInterviewState({
     questions,
     answers,
@@ -81,7 +80,6 @@ const InterviewSession: React.FC = () => {
           setCodeInput={setCodeInput}
           handleSubmitCode={handleSubmitCode}
           handleFinishInterview={handleFinishInterview}
-          cleanedQuestions={cleanedQuestions}
         />
       </div>
     </div>

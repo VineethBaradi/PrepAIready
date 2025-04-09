@@ -1,8 +1,7 @@
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef } from 'react';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
-import { getRandomWaitingMessage } from '@/utils/questionUtils';
 
 interface UseSpeechControlProps {
   currentQuestion: string;
@@ -25,9 +24,15 @@ interface UseSpeechControlReturn {
   handleStartRecording: () => void;
   handleStopRecording: () => void;
   readQuestion: (text: string) => void;
-  resetTranscript: () => void;
-  hasRecordedTranscript: boolean;
 }
+
+const waitingMessages = [
+  "Processing your response...",
+  "Analyzing your answer...",
+  "Recording your response...",
+  "Capturing your answer...",
+  "Saving your response..."
+];
 
 export const useSpeechControl = ({
   currentQuestion,
@@ -37,37 +42,11 @@ export const useSpeechControl = ({
   setIsWaiting,
   setWaitingMessage
 }: UseSpeechControlProps): UseSpeechControlReturn => {
-  const [localTranscript, setLocalTranscript] = useState('');
-  const [hasCompletedRecording, setHasCompletedRecording] = useState(false);
-  
-  const { 
-    transcript, 
-    isRecording, 
-    startRecording: startSpeechRecognition, 
-    stopRecording: stopSpeechRecognition, 
-    resetTranscript: resetSpeechRecognitionTranscript
-  } = useSpeechRecognition({
-    onTranscriptChange: (newTranscript) => {
-      console.log("Transcript updated in useSpeechControl:", newTranscript);
-      setLocalTranscript(newTranscript);
-    }
-  });
-  
+  const { transcript, isRecording, startRecording: startSpeechRecognition, stopRecording: stopSpeechRecognition } = useSpeechRecognition({});
   const { isSpeaking, isMuted, readAloud, stopSpeech, toggleMute: toggleSpeechMute } = useSpeechSynthesis();
   const lastReadQuestionRef = useRef<string>('');
   
-  // Synchronize states: When transcript changes from recognition, update localTranscript
-  useEffect(() => {
-    console.log("useSpeechControl - transcript value updated:", transcript);
-    if (transcript) {
-      setLocalTranscript(transcript);
-    }
-  }, [transcript]);
-  
   const handleStartRecording = () => {
-    console.log("Starting recording...");
-    setLocalTranscript(''); // Clear local transcript when starting
-    setHasCompletedRecording(false);
     startSpeechRecognition();
     if (stopSpeech) {
       stopSpeech();
@@ -75,34 +54,24 @@ export const useSpeechControl = ({
   };
   
   const handleStopRecording = () => {
-    console.log("Stopping recording...");
     stopSpeechRecognition();
     
-    // Use localTranscript for processing, which should be in sync with transcript
-    const userAnswer = localTranscript.trim();
+    const userAnswer = transcript.trim();
     
-    if (userAnswer) {
-      setHasCompletedRecording(true);
-      console.log("Processing answer:", userAnswer);
-      setIsWaiting(true);
-      setWaitingMessage(getRandomWaitingMessage());
-      
-      // Clear any existing timer
-      if (waitingTimerRef.current) {
-        clearTimeout(waitingTimerRef.current);
-      }
-      
-      waitingTimerRef.current = window.setTimeout(() => {
-        setIsWaiting(false);
-        processAnswer(userAnswer);
-      }, 2000);
-    } else {
-      console.log("No transcript to process");
+    if (!userAnswer) {
+      return;
     }
+    
+    setIsWaiting(true);
+    setWaitingMessage(waitingMessages[Math.floor(Math.random() * waitingMessages.length)]);
+    
+    waitingTimerRef.current = window.setTimeout(() => {
+      setIsWaiting(false);
+      processAnswer(userAnswer);
+    }, 2000);
   };
   
   const toggleRecording = () => {
-    console.log("Toggling recording, current state:", isRecording);
     if (isRecording) {
       handleStopRecording();
     } else {
@@ -117,25 +86,13 @@ export const useSpeechControl = ({
   // Modified to only read a question once by tracking the last question read
   const readQuestion = (text: string) => {
     if (typeof readAloud === 'function' && !isMuted && text !== lastReadQuestionRef.current) {
-      console.log("Reading question:", text);
       lastReadQuestionRef.current = text;
       readAloud(text);
     }
   };
   
-  const resetTranscript = () => {
-    console.log("Reset transcript called from useSpeechControl");
-    resetSpeechRecognitionTranscript();
-    setLocalTranscript('');
-    setHasCompletedRecording(false);
-  };
-  
-  // Determine if we have a valid transcript - either currently recording with content
-  // or have completed a recording session with content
-  const hasRecordedTranscript = (localTranscript && localTranscript.trim().length > 0 && !isRecording) || hasCompletedRecording;
-  
   return {
-    transcript: localTranscript, // Return the local transcript for consistency
+    transcript,
     isRecording,
     isSpeaking,
     isMuted,
@@ -145,8 +102,6 @@ export const useSpeechControl = ({
     toggleRecording,
     handleStartRecording,
     handleStopRecording,
-    readQuestion,
-    resetTranscript,
-    hasRecordedTranscript
+    readQuestion
   };
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTimer } from '@/hooks/useTimer';
 import { toast } from '@/components/ui/use-toast';
@@ -7,7 +8,6 @@ import { AnswerArea } from '../interview/AnswerArea';
 import { CodeInputArea } from '../interview/CodeInputArea';
 import { RecordingControls } from '../interview/RecordingControls';
 import { InterviewComplete } from '../interview/InterviewComplete';
-import { cleanQuestionText } from '@/utils/questionUtils';
 
 interface InterviewMainProps {
   questions: string[];
@@ -25,7 +25,6 @@ interface InterviewMainProps {
   setCodeInput: React.Dispatch<React.SetStateAction<string>>;
   handleSubmitCode: () => void;
   handleFinishInterview: () => void;
-  cleanedQuestions?: string[];
 }
 
 export const InterviewMain: React.FC<InterviewMainProps> = ({
@@ -43,8 +42,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
   processAnswer,
   setCodeInput,
   handleSubmitCode,
-  handleFinishInterview,
-  cleanedQuestions = []
+  handleFinishInterview
 }) => {
   const [localIsWaiting, setLocalIsWaiting] = useState(isWaiting);
   const [localWaitingMessage, setLocalWaitingMessage] = useState(waitingMessage);
@@ -57,19 +55,13 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     setLocalShowCodeInput(showCodeInput);
   }, [isWaiting, waitingMessage, showCodeInput]);
   
-  // Use cleaned questions if available, otherwise clean them now
-  const displayQuestions = cleanedQuestions.length > 0 
-    ? cleanedQuestions 
-    : questions.map(cleanQuestionText);
-  
-  const currentQuestion = displayQuestions[currentQuestionIndex] || "";
+  const currentQuestion = questions[currentQuestionIndex];
   
   // Store current question in sessionStorage for AnswerArea to check
   useEffect(() => {
     if (currentQuestion) {
       sessionStorage.setItem('currentQuestion', currentQuestion);
     }
-    console.log("Current question:", currentQuestion);
   }, [currentQuestion]);
 
   const {
@@ -79,9 +71,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     isMuted,
     toggleMute,
     toggleRecording,
-    readQuestion,
-    resetTranscript,
-    hasRecordedTranscript
+    readQuestion
   } = useSpeechControl({
     currentQuestion,
     processAnswer,
@@ -98,16 +88,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     }
   }, [currentQuestion, isMuted, readQuestion]);
 
-  // Reset transcript when moving to next question
-  useEffect(() => {
-    console.log("Current question index changed, resetting transcript");
-    if (resetTranscript) {
-      resetTranscript();
-    }
-  }, [currentQuestionIndex, resetTranscript]);
-
   const handleToggleRecording = () => {
-    console.log("Toggling recording");
     if (isRecording) {
       stopTimer();
     } else {
@@ -120,25 +101,6 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
   const handleToggleCodeInput = () => {
     setLocalShowCodeInput(prev => !prev);
   };
-
-  const handleNextWithReset = () => {
-    console.log("Handling next question with reset");
-    // Clear transcript first
-    resetTranscript();
-    // Then go to next question
-    handleNextQuestion();
-    
-    // Notify the user
-    toast({
-      title: "Next Question",
-      description: "Moving to the next question"
-    });
-  };
-
-  // Debug logging for transcript
-  useEffect(() => {
-    console.log("InterviewMain - Current transcript:", transcript);
-  }, [transcript]);
 
   useEffect(() => {
     return () => {
@@ -180,11 +142,11 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
             <RecordingControls 
               isRecording={isRecording}
               isWaiting={localIsWaiting}
-              hasTranscript={hasRecordedTranscript}
+              hasTranscript={!!transcript}
               timer={timer}
               formatTime={formatTime}
               onToggleRecording={handleToggleRecording}
-              onNextQuestion={handleNextWithReset}
+              onNextQuestion={handleNextQuestion}
               isLastQuestion={currentQuestionIndex === questions.length - 1}
             />
           </div>
