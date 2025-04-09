@@ -25,6 +25,8 @@ export const RecordingControls: React.FC<RecordingControlsProps> = ({
   onNextQuestion,
   isLastQuestion
 }) => {
+  console.log("RecordingControls - hasTranscript:", hasTranscript, "isRecording:", isRecording, "isLastQuestion:", isLastQuestion);
+  
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center">

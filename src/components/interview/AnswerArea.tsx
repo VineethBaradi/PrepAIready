@@ -38,6 +38,12 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
     }
   }, [transcript]);
 
+  // Determine if we should show the transcript or listening message
+  const hasTranscript = transcript && transcript.trim().length > 0;
+  const showTranscript = hasTranscript && !isWaiting;
+  const showListening = isRecording && !hasTranscript && !isWaiting;
+  const showStartPrompt = !isRecording && !hasTranscript && !isWaiting;
+
   return (
     <div 
       className={cn(
@@ -68,19 +74,20 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
             <p className="text-sm text-muted-foreground mt-2">{waitingMessage}</p>
           </div>
         </div>
-      ) : transcript && transcript.trim() ? (
+      ) : showTranscript ? (
         <ScrollArea className="h-full max-h-[300px]">
           <div className="pr-4" ref={scrollRef}>
             <p className="whitespace-pre-wrap">{transcript}</p>
           </div>
         </ScrollArea>
-      ) : (
-        <p className="text-muted-foreground text-center my-8">
-          {isRecording 
-            ? "Listening... Speak your answer to the question" 
-            : "Click the microphone button to start answering"
-          }
-        </p>
+      ) : showListening ? (
+        <div className="text-muted-foreground text-center my-8">
+          Listening... Speak your answer to the question
+        </div>
+      ) : showStartPrompt ? (
+        <div className="text-muted-foreground text-center my-8">
+          Click the microphone button to start answering
+        </div>
       )}
     </div>
   );

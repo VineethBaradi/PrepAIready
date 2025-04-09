@@ -26,6 +26,7 @@ interface UseSpeechControlReturn {
   handleStopRecording: () => void;
   readQuestion: (text: string) => void;
   resetTranscript: () => void;
+  hasRecordedTranscript: boolean;
 }
 
 export const useSpeechControl = ({
@@ -37,6 +38,7 @@ export const useSpeechControl = ({
   setWaitingMessage
 }: UseSpeechControlProps): UseSpeechControlReturn => {
   const [localTranscript, setLocalTranscript] = useState('');
+  const [hasCompletedRecording, setHasCompletedRecording] = useState(false);
   
   const { 
     transcript, 
@@ -65,6 +67,7 @@ export const useSpeechControl = ({
   const handleStartRecording = () => {
     console.log("Starting recording...");
     setLocalTranscript(''); // Clear local transcript when starting
+    setHasCompletedRecording(false);
     startSpeechRecognition();
     if (stopSpeech) {
       stopSpeech();
@@ -78,24 +81,24 @@ export const useSpeechControl = ({
     // Use localTranscript for processing, which should be in sync with transcript
     const userAnswer = localTranscript.trim();
     
-    if (!userAnswer) {
+    if (userAnswer) {
+      setHasCompletedRecording(true);
+      console.log("Processing answer:", userAnswer);
+      setIsWaiting(true);
+      setWaitingMessage(getRandomWaitingMessage());
+      
+      // Clear any existing timer
+      if (waitingTimerRef.current) {
+        clearTimeout(waitingTimerRef.current);
+      }
+      
+      waitingTimerRef.current = window.setTimeout(() => {
+        setIsWaiting(false);
+        processAnswer(userAnswer);
+      }, 2000);
+    } else {
       console.log("No transcript to process");
-      return;
     }
-    
-    console.log("Processing answer:", userAnswer);
-    setIsWaiting(true);
-    setWaitingMessage(getRandomWaitingMessage());
-    
-    // Clear any existing timer
-    if (waitingTimerRef.current) {
-      clearTimeout(waitingTimerRef.current);
-    }
-    
-    waitingTimerRef.current = window.setTimeout(() => {
-      setIsWaiting(false);
-      processAnswer(userAnswer);
-    }, 2000);
   };
   
   const toggleRecording = () => {
@@ -124,7 +127,12 @@ export const useSpeechControl = ({
     console.log("Reset transcript called from useSpeechControl");
     resetSpeechRecognitionTranscript();
     setLocalTranscript('');
+    setHasCompletedRecording(false);
   };
+  
+  // Determine if we have a valid transcript - either currently recording with content
+  // or have completed a recording session with content
+  const hasRecordedTranscript = (localTranscript && localTranscript.trim().length > 0 && !isRecording) || hasCompletedRecording;
   
   return {
     transcript: localTranscript, // Return the local transcript for consistency
@@ -138,6 +146,7 @@ export const useSpeechControl = ({
     handleStartRecording,
     handleStopRecording,
     readQuestion,
-    resetTranscript
+    resetTranscript,
+    hasRecordedTranscript
   };
 };

@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 
 interface UseSpeechRecognitionProps {
@@ -67,13 +68,27 @@ export function useSpeechRecognition({
             }
           }
         };
+        
+        recognitionRef.current.onend = () => {
+          console.log("Speech recognition ended");
+          // If we're still supposed to be recording, restart recognition
+          if (isRecording && !recognitionActive) {
+            try {
+              setTimeout(() => {
+                startRecognition();
+              }, 500);
+            } catch (e) {
+              console.error("Failed to restart recognition after end", e);
+            }
+          }
+        };
       }
     }
     
     return () => {
       stopRecognition();
     };
-  }, [onTranscriptChange, isRecording]);
+  }, [onTranscriptChange, isRecording, recognitionActive]);
 
   const startRecognition = () => {
     if (recognitionRef.current) {
@@ -111,12 +126,20 @@ export function useSpeechRecognition({
     console.log("Stopping recording in hook");
     setIsRecording(false);
     stopRecognition();
+    
+    // Force a final update with the complete transcript
+    if (onTranscriptChange) {
+      onTranscriptChange(fullTranscriptRef.current);
+    }
   };
   
   const resetTranscript = () => {
     console.log("Resetting transcript");
     setTranscript("");
     fullTranscriptRef.current = "";
+    if (onTranscriptChange) {
+      onTranscriptChange("");
+    }
   };
 
   return {
