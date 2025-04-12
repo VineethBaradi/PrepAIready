@@ -11,10 +11,7 @@ export const evaluateAnswer = async (
   const apiKey = getApiKey();
 
   if (!apiKey) {
-    return { 
-      score: 7, 
-      feedback: "Your answer demonstrates understanding of the topic, but could be more specific with examples." 
-    };
+    return generateDefaultFeedback(question, answer);
   }
 
   try {
@@ -29,7 +26,7 @@ export const evaluateAnswer = async (
         messages: [
           {
             role: "system",
-            content: `You are an expert interviewer and evaluator for data roles. You're evaluating a candidate for a ${jobRole} position. Provide a concise evaluation of their answer.`
+            content: `You are an expert interviewer and evaluator for ${jobRole} positions. You're evaluating a candidate's interview answer. Provide a concise, constructive evaluation.`
           },
           {
             role: "user",
@@ -44,7 +41,7 @@ export const evaluateAnswer = async (
     if (!response.ok) {
       if (response.status === 402) {
         console.error("API quota exceeded or payment required");
-        return getSimulatedEvaluation(question, answer);
+        return generateDefaultFeedback(question, answer);
       }
       throw new Error(`API request failed with status ${response.status}`);
     }
@@ -72,29 +69,15 @@ export const evaluateAnswer = async (
     }
   } catch (error) {
     console.error("Error evaluating answer:", error);
-    return getSimulatedEvaluation(question, answer);
+    return generateDefaultFeedback(question, answer);
   }
 };
 
-// Helper function to generate simulated evaluations
-function getSimulatedEvaluation(question: string, answer: string): { score: number; feedback: string } {
-  // Generate a score between 5 and 9 to make it realistic
-  const score = Math.floor(Math.random() * 5) + 5;
-  
-  // Choose a relevant feedback based on the question type
-  let feedback = "Good response, but consider adding more specific examples.";
-  
-  if (question.toLowerCase().includes("sql")) {
-    feedback = "Your SQL knowledge appears solid. Consider discussing query optimization techniques for large datasets.";
-  } else if (question.toLowerCase().includes("python")) {
-    feedback = "Good Python explanation. You might also discuss how you've used libraries like pandas or numpy for data manipulation.";
-  } else if (question.toLowerCase().includes("machine learning")) {
-    feedback = "Solid understanding of machine learning concepts. Consider discussing model evaluation metrics and validation strategies.";
-  } else if (question.toLowerCase().includes("data quality")) {
-    feedback = "Good approach to data quality. You could elaborate on automated testing and validation techniques.";
-  } else if (question.toLowerCase().includes("visualization")) {
-    feedback = "Good visualization knowledge. Consider discussing how you choose the right visualization for different data types.";
-  }
-  
-  return { score, feedback };
+// Helper function to generate default feedback if AI fails
+function generateDefaultFeedback(question: string, answer: string): { score: number; feedback: string } {
+  // Default positive feedback - the real AI would provide much more nuanced feedback
+  return { 
+    score: 7, 
+    feedback: "Your answer shows good understanding of the topic. For improvement, consider adding more specific examples from your experience." 
+  };
 }

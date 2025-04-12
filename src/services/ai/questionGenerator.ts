@@ -1,7 +1,6 @@
 
 import { toast } from "@/components/ui/use-toast";
 import { API_URL, getApiKey } from './apiConfig';
-import { technicalQuestions, generateTechnicalQuestions } from './technicalQuestions';
 
 export interface GenerateQuestionsOptions {
   resume: string;
@@ -21,7 +20,7 @@ export const generateInterviewQuestions = async (
       description: "There was an issue with the API key. Please try again later.",
       variant: "destructive",
     });
-    return generateTechnicalQuestions(jobRole);
+    return generateFallbackQuestions(jobRole);
   }
 
   try {
@@ -36,21 +35,21 @@ export const generateInterviewQuestions = async (
         messages: [
           {
             role: "system",
-            content: `Act as a Technical Interviewer for data roles. Your goal is to gauge the candidate's fit for a ${jobRole} role by asking technical (50%), coding (40%), and behavioral/situational (10%) questions. For coding questions, focus heavily on SQL and Python practical problems.
+            content: `Act as a Technical Interviewer for a ${jobRole} position. Your goal is to gauge the candidate's fit for this role by asking technical (50%), coding (25%), and behavioral/situational (25%) questions. For technical roles, focus on relevant technical skills and problem-solving.
 
 Steps to Follow:
-1. Analyze the Resume: Identify key technical skills, experience, and gaps from the resume.
+1. Analyze the Resume: Identify key skills, experience, and potential knowledge gaps.
 
 2. Create Questions:
-   - Technical (50%): Questions about tools/skills relevant to ${jobRole} (databases, analytics tools, etc.)
-   - Coding (40%): SQL and Python coding questions that require demonstrating problem-solving skills. Include specific data manipulation, analysis, or algorithm challenges.
-   - Behavioral (10%): Brief questions about teamwork or problem-solving approach.
+   - Technical: Questions about tools/technologies/methodologies relevant to ${jobRole}
+   - Coding/Problem-Solving: Questions that demonstrate technical problem-solving abilities
+   - Behavioral: Questions about teamwork, challenges, and professional experiences
    
-3. Make at least 3 questions specifically about SQL queries and 2 about Python data manipulation/analysis.`
+3. Make questions specific to the candidate's background when possible.`
           },
           {
             role: "user",
-            content: `Generate ${count} challenging interview questions for a ${jobRole} position based on this resume:\n\n${resume}\n\nCreate a mix of questions including: 50% technical questions specific to ${jobRole}, 40% coding questions that require demonstrating SQL and Python skills (make these practical and challenging), and 10% behavioral questions. Format your response as a JSON array of strings, with each string being a question. Include detailed SQL and Python scenario-based questions that would require writing code.`
+            content: `Generate ${count} challenging interview questions for a ${jobRole} position based on this resume:\n\n${resume}\n\nCreate a mix of questions including technical questions specific to ${jobRole}, problem-solving questions, and behavioral questions. Format your response as a JSON array of strings, with each string being a question.`
           }
         ],
         temperature: 0.7,
@@ -63,10 +62,10 @@ Steps to Follow:
         console.error("API quota exceeded or payment required");
         toast({
           title: "API Limit Reached",
-          description: "Using generated technical questions for this interview session.",
+          description: "Using generated fallback questions for this interview session.",
           variant: "default",
         });
-        return generateTechnicalQuestions(jobRole);
+        return generateFallbackQuestions(jobRole);
       }
       throw new Error(`API request failed with status ${response.status}`);
     }
@@ -107,26 +106,30 @@ Steps to Follow:
     // Filter out any empty questions
     questions = questions.filter(q => q && q.length > 5);
 
-    // Ensure we have at least a few technical coding questions
-    if (!questions.some(q => q.toLowerCase().includes('sql') || q.toLowerCase().includes('query'))) {
-      const sqlQuestion = technicalQuestions.sql[Math.floor(Math.random() * technicalQuestions.sql.length)];
-      questions.splice(Math.floor(questions.length / 2), 0, sqlQuestion);
-    }
-    
-    if (!questions.some(q => q.toLowerCase().includes('python'))) {
-      const pythonQuestion = technicalQuestions.python[Math.floor(Math.random() * technicalQuestions.python.length)];
-      questions.splice(Math.floor(questions.length / 2) + 1, 0, pythonQuestion);
-    }
-
     return questions;
   } catch (error) {
     console.error("Error generating interview questions:", error);
     toast({
-      title: "Using Generated Technical Questions",
-      description: "We're generating technical questions for your interview practice.",
+      title: "Using Fallback Questions",
+      description: "We're generating generic questions for your interview practice.",
       variant: "default",
     });
     
-    return generateTechnicalQuestions(jobRole);
+    return generateFallbackQuestions(jobRole);
   }
 };
+
+// Generate fallback questions if AI fails
+async function generateFallbackQuestions(jobRole: string): Promise<string[]> {
+  // Create generic questions based on job role
+  return [
+    `Tell me about your experience in ${jobRole}.`,
+    `What technical skills do you have that are relevant to ${jobRole}?`,
+    `Describe a challenging project you worked on related to ${jobRole}.`,
+    `How do you stay updated with the latest trends in ${jobRole}?`,
+    `What methodologies or frameworks do you use in your ${jobRole} work?`,
+    `Tell me about a time you had to solve a complex problem in your role.`,
+    `How do you approach working with a team on ${jobRole} projects?`,
+    `Where do you see the future of ${jobRole} heading?`
+  ];
+}

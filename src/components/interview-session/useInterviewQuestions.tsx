@@ -31,7 +31,7 @@ export const useInterviewQuestions = (): UseInterviewQuestionsReturn => {
       if (!resumeContent || !jobRole) {
         toast({
           title: "Missing information",
-          description: "Please upload a resume and select a data role first.",
+          description: "Please upload a resume and select a job role first.",
           variant: "destructive",
         });
         navigate('/');
@@ -45,10 +45,6 @@ export const useInterviewQuestions = (): UseInterviewQuestionsReturn => {
           count: 8
         });
         
-        if (generatedQuestions.length < 5) {
-          setUsingFallbackQuestions(true);
-        }
-        
         setQuestions(generatedQuestions);
         setAnswers(new Array(generatedQuestions.length).fill(''));
         setEvaluations(new Array(generatedQuestions.length).fill({ score: 0, feedback: '' }));
@@ -56,10 +52,11 @@ export const useInterviewQuestions = (): UseInterviewQuestionsReturn => {
         console.error("Failed to generate questions:", error);
         setUsingFallbackQuestions(true);
         toast({
-          title: "Using backup questions",
-          description: "We're using pre-defined questions for your interview practice.",
-          variant: "default",
+          title: "Error generating questions",
+          description: "There was a problem generating your interview questions. Please try again.",
+          variant: "destructive",
         });
+        navigate('/');
       } finally {
         setIsLoading(false);
       }

@@ -36,7 +36,7 @@ const Header: React.FC = () => {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold tracking-tight">InterviewGenius</span>
+          <span className="text-xl font-bold tracking-tight">PrepAIready</span>
         </Link>
         
         <nav className="hidden md:flex items-center space-x-8">

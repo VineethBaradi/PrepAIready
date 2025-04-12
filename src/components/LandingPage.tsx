@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Upload, FileText, Award, Database } from 'lucide-react';
+import { ArrowRight, Upload, FileText, Award, Database, Brain } from 'lucide-react';
 import Button from './Button';
 import FileUpload from './FileUpload';
 import { cn } from '@/lib/utils';
@@ -10,9 +10,9 @@ import { toast } from '@/components/ui/use-toast';
 
 const features = [
   {
-    icon: <Database className="h-6 w-6 text-primary" />,
-    title: "Data Role Interviews",
-    description: "Specialized questions for Data Scientists, Engineers, and Analysts"
+    icon: <Brain className="h-6 w-6 text-primary" />,
+    title: "AI-Powered Interview Prep",
+    description: "Dynamic questions tailored to your resume and job role"
   },
   {
     icon: <FileText className="h-6 w-6 text-primary" />,
@@ -21,8 +21,8 @@ const features = [
   },
   {
     icon: <Award className="h-6 w-6 text-primary" />,
-    title: "Detailed Feedback",
-    description: "Get personalized insights to improve your data career prospects"
+    title: "Personalized Feedback",
+    description: "Get AI-driven insights to improve your interview performance"
   }
 ];
 
@@ -66,17 +66,17 @@ const LandingPage: React.FC = () => {
         {/* Hero Section */}
         <div className="text-center mb-16 animate-fade-in">
           <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
-            Ace Your Data Interview with AI
+            Ace Your Interview with PrepAIready
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Practice with our AI-powered interview simulator specialized for data roles. Get personalized feedback to help you land your dream data job.
+            Practice with our AI-powered interview simulator. Get personalized feedback to help you land your dream job with confidence.
           </p>
         </div>
         
         {/* Main Card */}
         <div className="glass-card max-w-3xl mx-auto mb-16 animate-fade-in" style={{animationDelay: "100ms"}}>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-medium text-center">Start Your Data Interview Practice</h2>
+            <h2 className="text-2xl font-medium text-center">Start Your Interview Practice</h2>
           </div>
           
           <div className="space-y-8">
@@ -88,7 +88,7 @@ const LandingPage: React.FC = () => {
             
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Select data role
+                Select job role
               </label>
               
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
@@ -123,7 +123,7 @@ const LandingPage: React.FC = () => {
                   htmlFor="custom-role"
                   className="ml-2 block text-sm"
                 >
-                  Other data role (specify)
+                  Other job role (specify)
                 </label>
               </div>
               
@@ -132,7 +132,7 @@ const LandingPage: React.FC = () => {
                   type="text"
                   value={customRole}
                   onChange={(e) => setCustomRole(e.target.value)}
-                  placeholder="Enter specific data role (e.g., NLP Engineer)"
+                  placeholder="Enter specific job role (e.g., Frontend Developer)"
                   className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 />
               )}
@@ -145,7 +145,7 @@ const LandingPage: React.FC = () => {
               onClick={handleStartInterview}
               disabled={!isReadyToStart}
             >
-              Start Data Interview
+              Start Interview Practice
             </Button>
           </div>
         </div>

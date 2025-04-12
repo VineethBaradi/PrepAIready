@@ -27,7 +27,7 @@ export const CodeInputArea: React.FC<CodeInputAreaProps> = ({
           value={codeInput}
           onChange={(e) => onCodeChange(e.target.value)}
           className="flex-1 p-4 border rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-1 focus:ring-primary"
-          placeholder="# Write your SQL query or Python code here..."
+          placeholder="# Write your SQL query or code here..."
         />
         <div className="flex justify-end mt-4">
           <Button 

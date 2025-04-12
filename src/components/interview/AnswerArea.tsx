@@ -1,8 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { Code } from 'lucide-react';
-import Button from '../Button';
+import { Button } from '../ui/button';
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { isCodingQuestion } from '@/utils/codingQuestionDetector';
 
 interface AnswerAreaProps {
   transcript: string;
@@ -21,16 +23,31 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
   showCodeInput = false,
   onToggleCodeInput
 }) => {
-  const question = sessionStorage.getItem('currentQuestion') || '';
-  const needsCodeInput = question.toLowerCase().includes('sql') || 
-                         question.toLowerCase().includes('python') ||
-                         question.toLowerCase().includes('code') || 
-                         question.toLowerCase().includes('write');
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const currentQuestion = sessionStorage.getItem('currentQuestion') || '';
+  const needsCodeInput = isCodingQuestion(currentQuestion);
+  
+  useEffect(() => {
+    console.log("AnswerArea received transcript:", transcript);
+  }, [transcript]);
+  
+  // Auto-scroll to bottom when transcript changes
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [transcript]);
+
+  // Determine if we should show the transcript or listening message
+  const hasTranscript = transcript && transcript.trim().length > 0;
+  const showTranscript = hasTranscript && !isWaiting;
+  const showListening = isRecording && !hasTranscript && !isWaiting;
+  const showStartPrompt = !isRecording && !hasTranscript && !isWaiting;
 
   return (
     <div 
       className={cn(
-        "flex-1 p-4 border rounded-lg mb-4 transition-all duration-300 overflow-y-auto relative",
+        "flex-1 p-4 border rounded-lg mb-4 transition-all duration-300 relative",
         isRecording 
           ? "border-primary bg-primary/5 animate-pulse-subtle" 
           : "border-input"
@@ -39,7 +56,7 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
       {needsCodeInput && onToggleCodeInput && (
         <div className="absolute top-2 right-2 z-10">
           <Button
-            variant={showCodeInput ? "primary" : "outline"} 
+            variant={showCodeInput ? "default" : "outline"} 
             size="sm"
             onClick={onToggleCodeInput}
             className="flex items-center gap-1 px-2 py-1"
@@ -57,18 +74,21 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
             <p className="text-sm text-muted-foreground mt-2">{waitingMessage}</p>
           </div>
         </div>
-      ) : transcript ? (
-        <div>
-          <p>{transcript}</p>
+      ) : showTranscript ? (
+        <ScrollArea className="h-full max-h-[300px]">
+          <div className="pr-4" ref={scrollRef}>
+            <p className="whitespace-pre-wrap">{transcript}</p>
+          </div>
+        </ScrollArea>
+      ) : showListening ? (
+        <div className="text-muted-foreground text-center my-8">
+          Listening... Speak your answer to the question
         </div>
-      ) : (
-        <p className="text-muted-foreground text-center my-8">
-          {isRecording 
-            ? "Listening... Speak your answer to the data question" 
-            : "Click the microphone button to start answering"
-          }
-        </p>
-      )}
+      ) : showStartPrompt ? (
+        <div className="text-muted-foreground text-center my-8">
+          Click the microphone button to start answering
+        </div>
+      ) : null}
     </div>
   );
 };
