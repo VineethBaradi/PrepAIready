@@ -1,10 +1,12 @@
-
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { Code } from 'lucide-react';
+import { Code, Edit2, MessageSquare } from 'lucide-react';
 import { Button } from '../ui/button';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { isCodingQuestion } from '@/utils/codingQuestionDetector';
+import { Textarea } from '../ui/textarea';
+import { Switch } from '../ui/switch';
+import { Label } from '../ui/label';
 
 interface AnswerAreaProps {
   transcript: string;
@@ -13,6 +15,7 @@ interface AnswerAreaProps {
   waitingMessage: string;
   showCodeInput?: boolean;
   onToggleCodeInput?: () => void;
+  onTranscriptChange?: (newTranscript: string) => void;
 }
 
 export const AnswerArea: React.FC<AnswerAreaProps> = ({
@@ -21,11 +24,18 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
   isWaiting,
   waitingMessage,
   showCodeInput = false,
-  onToggleCodeInput
+  onToggleCodeInput,
+  onTranscriptChange
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentQuestion = sessionStorage.getItem('currentQuestion') || '';
   const needsCodeInput = isCodingQuestion(currentQuestion);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTranscript, setEditedTranscript] = useState(transcript);
+  
+  useEffect(() => {
+    setEditedTranscript(transcript);
+  }, [transcript]);
   
   useEffect(() => {
     console.log("AnswerArea received transcript:", transcript);
@@ -38,11 +48,28 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
     }
   }, [transcript]);
 
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = () => {
+    if (onTranscriptChange) {
+      onTranscriptChange(editedTranscript);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditedTranscript(transcript);
+    setIsEditing(false);
+  };
+
   // Determine if we should show the transcript or listening message
   const hasTranscript = transcript && transcript.trim().length > 0;
   const showTranscript = hasTranscript && !isWaiting;
   const showListening = isRecording && !hasTranscript && !isWaiting;
   const showStartPrompt = !isRecording && !hasTranscript && !isWaiting;
+  const showEditButton = !isRecording && hasTranscript && !isWaiting;
 
   return (
     <div 
@@ -54,16 +81,16 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
       )}
     >
       {needsCodeInput && onToggleCodeInput && (
-        <div className="absolute top-2 right-2 z-10">
-          <Button
-            variant={showCodeInput ? "default" : "outline"} 
-            size="sm"
-            onClick={onToggleCodeInput}
-            className="flex items-center gap-1 px-2 py-1"
-          >
-            <Code className="h-4 w-4" />
-            <span>{showCodeInput ? "Show Transcript" : "Write Code"}</span>
-          </Button>
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-2">
+          <div className="flex items-center space-x-2">
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <Switch
+              id="input-mode"
+              checked={showCodeInput}
+              onCheckedChange={onToggleCodeInput}
+            />
+            <Code className="h-4 w-4 text-muted-foreground" />
+          </div>
         </div>
       )}
       
@@ -75,11 +102,45 @@ export const AnswerArea: React.FC<AnswerAreaProps> = ({
           </div>
         </div>
       ) : showTranscript ? (
-        <ScrollArea className="h-full max-h-[300px]">
-          <div className="pr-4" ref={scrollRef}>
-            <p className="whitespace-pre-wrap">{transcript}</p>
-          </div>
-        </ScrollArea>
+        <div className="relative">
+          {!isEditing ? (
+            <>
+              <ScrollArea className="h-full max-h-[300px]">
+                <div className="pr-4" ref={scrollRef}>
+                  <p className="whitespace-pre-wrap">{transcript}</p>
+                </div>
+              </ScrollArea>
+              {showEditButton && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleEditClick}
+                  className="absolute top-2 right-2"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              )}
+            </>
+          ) : (
+            <div className="space-y-2">
+              <ScrollArea className="h-full max-h-[300px]">
+                <Textarea
+                  value={editedTranscript}
+                  onChange={(e) => setEditedTranscript(e.target.value)}
+                  className="min-h-[200px] resize-none"
+                />
+              </ScrollArea>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSaveEdit}>
+                  Save
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       ) : showListening ? (
         <div className="text-muted-foreground text-center my-8">
           Listening... Speak your answer to the question

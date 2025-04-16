@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTimer } from '@/hooks/useTimer';
 import { toast } from '@/components/ui/use-toast';
@@ -71,7 +70,8 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     isMuted,
     toggleMute,
     toggleRecording,
-    readQuestion
+    readQuestion,
+    setTranscript
   } = useSpeechControl({
     currentQuestion,
     processAnswer,
@@ -100,6 +100,14 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
 
   const handleToggleCodeInput = () => {
     setLocalShowCodeInput(prev => !prev);
+    // When switching to code input, save the current transcript
+    if (!localShowCodeInput && transcript) {
+      sessionStorage.setItem(`answer_${currentQuestionIndex}`, transcript);
+    }
+    // When switching to answer input, save the current code
+    if (localShowCodeInput && codeInput) {
+      sessionStorage.setItem(`code_${currentQuestionIndex}`, codeInput);
+    }
   };
 
   useEffect(() => {
@@ -110,6 +118,22 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
     };
   }, [waitingTimerRef]);
   
+  const handleNextQuestionWithClear = () => {
+    // Save both answer and code before moving to next question
+    if (transcript) {
+      sessionStorage.setItem(`answer_${currentQuestionIndex}`, transcript);
+    }
+    if (codeInput) {
+      sessionStorage.setItem(`code_${currentQuestionIndex}`, codeInput);
+    }
+    
+    // Clear the transcript before moving to next question
+    if (setTranscript) {
+      setTranscript('');
+    }
+    handleNextQuestion();
+  };
+
   return (
     <div className="flex-1 flex flex-col glass-card">
       <QuestionDisplay 
@@ -122,22 +146,26 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
       <div className="flex-1 flex flex-col">
         {isInterviewComplete ? (
           <InterviewComplete onFinishInterview={handleFinishInterview} />
-        ) : localShowCodeInput ? (
-          <CodeInputArea 
-            codeInput={codeInput}
-            onCodeChange={setCodeInput}
-            onSubmit={handleSubmitCode}
-          />
         ) : (
           <div className="flex-1 flex flex-col">
-            <AnswerArea 
-              transcript={transcript}
-              isRecording={isRecording}
-              isWaiting={localIsWaiting}
-              waitingMessage={localWaitingMessage}
-              showCodeInput={localShowCodeInput}
-              onToggleCodeInput={handleToggleCodeInput}
-            />
+            {localShowCodeInput ? (
+              <CodeInputArea 
+                codeInput={codeInput}
+                onCodeChange={setCodeInput}
+                onSubmit={handleSubmitCode}
+                onToggleMode={handleToggleCodeInput}
+              />
+            ) : (
+              <AnswerArea 
+                transcript={transcript}
+                isRecording={isRecording}
+                isWaiting={localIsWaiting}
+                waitingMessage={localWaitingMessage}
+                showCodeInput={localShowCodeInput}
+                onToggleCodeInput={handleToggleCodeInput}
+                onTranscriptChange={setTranscript}
+              />
+            )}
             
             <RecordingControls 
               isRecording={isRecording}
@@ -146,7 +174,7 @@ export const InterviewMain: React.FC<InterviewMainProps> = ({
               timer={timer}
               formatTime={formatTime}
               onToggleRecording={handleToggleRecording}
-              onNextQuestion={handleNextQuestion}
+              onNextQuestion={handleNextQuestionWithClear}
               isLastQuestion={currentQuestionIndex === questions.length - 1}
             />
           </div>

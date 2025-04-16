@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loader2, ArrowLeft, Award, Check, AlertTriangle, BarChart4, LineChart } from 'lucide-react';
+import { Loader2, ArrowLeft, Award, Check, AlertTriangle, BarChart4, LineChart, Code, MessageSquare } from 'lucide-react';
 import { analyzeInterviewResponses } from '@/services/aiService';
-import Button from './Button';
+import { Button } from './ui/button';
 import { toast } from '@/components/ui/use-toast';
 import {
   Table,
@@ -13,29 +13,55 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card } from './ui/card';
+import { Progress } from './ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { cn } from '@/lib/utils';
+
+interface Evaluation {
+  score: number;
+  feedback: string;
+  strengths?: string[];
+  improvements?: string[];
+  detailedFeedback?: {
+    score: number;
+    explanation: string;
+    technicalAccuracy?: number;
+    clarity?: number;
+    completeness?: number;
+  };
+}
+
+interface QuestionFeedback {
+  question: string;
+  answer: string;
+  code?: string;
+  evaluation: Evaluation;
+}
 
 const FeedbackPage: React.FC = () => {
   const [feedback, setFeedback] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const [overallScore, setOverallScore] = useState<number | null>(null);
-  const [evaluations, setEvaluations] = useState<Array<{score: number; feedback: string}>>([]);
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
-  const [jobRole, setJobRole] = useState<string>('');
+  const [questionFeedback, setQuestionFeedback] = useState<QuestionFeedback[]>([]);
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const generateFeedback = async () => {
       try {
-        const questionsJSON = sessionStorage.getItem('interviewQuestions');
-        const answersJSON = sessionStorage.getItem('interviewAnswers');
-        const evaluationsJSON = sessionStorage.getItem('interviewEvaluations');
-        const role = sessionStorage.getItem('jobRole');
-        const resume = sessionStorage.getItem('resume');
+        const [questionsJSON, answersJSON, evaluationsJSON, resume, jobDescription] = [
+          sessionStorage.getItem('interviewQuestions'),
+          sessionStorage.getItem('interviewAnswers'),
+          sessionStorage.getItem('interviewEvaluations'),
+          sessionStorage.getItem('resume'),
+          sessionStorage.getItem('jobDescription')
+        ];
         
-        if (!questionsJSON || !answersJSON || !role || !resume) {
+        if (!questionsJSON || !answersJSON || !resume || !jobDescription) {
           toast({
             title: "Missing interview data",
             description: "Interview data is missing. Please complete an interview first.",
@@ -45,32 +71,45 @@ const FeedbackPage: React.FC = () => {
           return;
         }
         
-        setJobRole(role);
+        const [questionsList, answersList] = [
+          JSON.parse(questionsJSON),
+          JSON.parse(answersJSON)
+        ];
         
-        const questionsList = JSON.parse(questionsJSON);
-        const answersList = JSON.parse(answersJSON);
         setQuestions(questionsList);
         setAnswers(answersList);
         
         if (evaluationsJSON) {
           const parsedEvaluations = JSON.parse(evaluationsJSON);
-          const validEvaluations = parsedEvaluations.filter(item => item && typeof item === 'object' && item.score !== undefined);
+          const validEvaluations = parsedEvaluations.filter(
+            item => item && typeof item === 'object' && item.score !== undefined
+          );
           setEvaluations(validEvaluations);
         }
         
-        const result = await analyzeInterviewResponses(
-          questionsList,
-          answersList,
-          role,
-          resume
-        );
+        const result = await analyzeInterviewResponses({
+          questions: questionsList,
+          answers: answersList,
+          resume,
+          jobDescription
+        });
         
         setFeedback(result);
         
         const scoreMatch = result.match(/overall score:?\s*(\d+)/i);
-        if (scoreMatch && scoreMatch[1]) {
+        if (scoreMatch?.[1]) {
           setOverallScore(parseInt(scoreMatch[1], 10));
         }
+
+        // Prepare question feedback data
+        const feedbackData = questionsList.map((question: string, index: number) => ({
+          question,
+          answer: answersList[index] || "No answer provided",
+          code: sessionStorage.getItem(`code_${index}`),
+          evaluation: evaluations[index] || { score: 0, feedback: "No evaluation available" }
+        }));
+        
+        setQuestionFeedback(feedbackData);
       } catch (error) {
         console.error("Error generating feedback:", error);
         setFeedback("We encountered an error while generating your feedback. Please try again later.");
@@ -91,7 +130,7 @@ const FeedbackPage: React.FC = () => {
       <div className="min-h-screen pt-24 pb-16 px-6 flex flex-col items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-lg">Analyzing your data interview performance...</p>
+          <p className="text-lg">Analyzing your interview performance...</p>
         </div>
       </div>
     );
@@ -114,10 +153,242 @@ const FeedbackPage: React.FC = () => {
     return "bg-red-500";
   };
   
-  const renderFeedback = () => {
-    if (!feedback) return null;
-    
-    return feedback.split('\n\n').map((paragraph, index) => {
+  const getScoreLabel = (score: number): string => {
+    if (score >= 8) return "Excellent";
+    if (score >= 6) return "Good";
+    if (score >= 4) return "Fair";
+    return "Needs Improvement";
+  };
+  
+  return (
+    <div className="min-h-screen pt-24 pb-16 px-6">
+      <div className="max-w-6xl w-full mx-auto">
+        <Button
+          variant="outline"
+          className="mb-6"
+          onClick={handleNewInterview}
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Start New Interview
+        </Button>
+        
+        <div className="space-y-8">
+          {/* Overall Performance Card */}
+          <Card className="p-6">
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Award className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-medium">Interview Performance Summary</h2>
+                  <p className="text-muted-foreground">
+                    {/* {jobRole} Interview Analysis */}
+                  </p>
+                </div>
+              </div>
+              
+              {overallScore !== null && (
+                <div className="md:ml-auto">
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <p className="text-sm text-muted-foreground">Overall Score</p>
+                      <div className="flex items-center justify-center gap-2">
+                        <p className={cn("text-4xl font-bold", getScoreColorClass(overallScore / 10))}>
+                          {overallScore}
+                        </p>
+                        <p className="text-sm text-muted-foreground">/100</p>
+                      </div>
+                      <p className={cn("text-sm font-medium", getScoreColorClass(overallScore / 10))}>
+                        {getScoreLabel(overallScore / 10)}
+                      </p>
+                    </div>
+                    <div className="w-48">
+                      <Progress 
+                        value={overallScore} 
+                        className={cn("h-2", getScoreBackgroundClass(overallScore / 10))}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Detailed Feedback */}
+          <Tabs defaultValue="questions" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="questions">Question-by-Question</TabsTrigger>
+              <TabsTrigger value="summary">Overall Summary</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="questions" className="space-y-4">
+              {questionFeedback.map((item, index) => (
+                <Card key={index} className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-4">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm font-medium">{index + 1}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium mb-2">{item.question}</h3>
+                        
+                        <Tabs defaultValue="answer" className="mt-4">
+                          <TabsList>
+                            <TabsTrigger value="answer" className="flex items-center gap-2">
+                              <MessageSquare className="h-4 w-4" />
+                              Answer
+                            </TabsTrigger>
+                            {item.code && (
+                              <TabsTrigger value="code" className="flex items-center gap-2">
+                                <Code className="h-4 w-4" />
+                                Code
+                              </TabsTrigger>
+                            )}
+                          </TabsList>
+
+                          <TabsContent value="answer">
+                            <div className="mt-4 p-4 bg-muted/50 rounded-md">
+                              <p className="text-sm text-muted-foreground mb-2">Your Answer:</p>
+                              <p className="text-sm">{item.answer}</p>
+                            </div>
+                          </TabsContent>
+
+                          {item.code && (
+                            <TabsContent value="code">
+                              <div className="mt-4 p-4 bg-muted/50 rounded-md">
+                                <p className="text-sm text-muted-foreground mb-2">Your Code:</p>
+                                <pre className="text-sm font-mono bg-background p-4 rounded-md overflow-x-auto">
+                                  {item.code}
+                                </pre>
+                              </div>
+                            </TabsContent>
+                          )}
+                        </Tabs>
+
+                        <div className="mt-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">Score:</span>
+                              <span className={cn(
+                                "text-sm font-bold",
+                                getScoreColorClass(item.evaluation.detailedFeedback?.score || item.evaluation.score)
+                              )}>
+                                {(item.evaluation.detailedFeedback?.score || item.evaluation.score)}/10
+                              </span>
+                              <span className={cn(
+                                "text-xs font-medium",
+                                getScoreColorClass(item.evaluation.detailedFeedback?.score || item.evaluation.score)
+                              )}>
+                                ({getScoreLabel(item.evaluation.detailedFeedback?.score || item.evaluation.score)})
+                              </span>
+                            </div>
+                            <Progress 
+                              value={(item.evaluation.detailedFeedback?.score || item.evaluation.score) * 10} 
+                              className={cn("h-2 flex-1", getScoreBackgroundClass(item.evaluation.detailedFeedback?.score || item.evaluation.score))}
+                            />
+                          </div>
+
+                          <div className="mt-4 space-y-3">
+                            <div className="p-4 bg-muted/50 rounded-md">
+                              <h4 className="text-sm font-medium mb-2">Detailed Feedback:</h4>
+                              {item.evaluation.detailedFeedback ? (
+                                <div className="space-y-4">
+                                  <p className="text-sm text-muted-foreground">{item.evaluation.detailedFeedback.explanation}</p>
+                                  
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    {item.evaluation.detailedFeedback.technicalAccuracy !== undefined && (
+                                      <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                          <span className="text-xs font-medium">Technical Accuracy</span>
+                                          <span className="text-xs">{item.evaluation.detailedFeedback.technicalAccuracy}/10</span>
+                                        </div>
+                                        <Progress 
+                                          value={item.evaluation.detailedFeedback.technicalAccuracy * 10} 
+                                          className="h-1"
+                                        />
+                                      </div>
+                                    )}
+                                    
+                                    {item.evaluation.detailedFeedback.clarity !== undefined && (
+                                      <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                          <span className="text-xs font-medium">Clarity</span>
+                                          <span className="text-xs">{item.evaluation.detailedFeedback.clarity}/10</span>
+                                        </div>
+                                        <Progress 
+                                          value={item.evaluation.detailedFeedback.clarity * 10} 
+                                          className="h-1"
+                                        />
+                                      </div>
+                                    )}
+                                    
+                                    {item.evaluation.detailedFeedback.completeness !== undefined && (
+                                      <div>
+                                        <div className="flex justify-between items-center mb-1">
+                                          <span className="text-xs font-medium">Completeness</span>
+                                          <span className="text-xs">{item.evaluation.detailedFeedback.completeness}/10</span>
+                                        </div>
+                                        <Progress 
+                                          value={item.evaluation.detailedFeedback.completeness * 10} 
+                                          className="h-1"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-muted-foreground">{item.evaluation.feedback}</p>
+                              )}
+                            </div>
+
+                            {item.evaluation.strengths && item.evaluation.strengths.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium">Strengths:</h4>
+                                {item.evaluation.strengths.map((strength, i) => (
+                                  <div key={i} className="flex gap-2 items-start">
+                                    <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                    <p className="text-sm">{strength}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {item.evaluation.improvements && item.evaluation.improvements.length > 0 && (
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium">Areas for Improvement:</h4>
+                                {item.evaluation.improvements.map((improvement, i) => (
+                                  <div key={i} className="flex gap-2 items-start">
+                                    <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                                    <p className="text-sm">{improvement}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            {item.code && (
+                              <div className="space-y-2">
+                                <h4 className="text-sm font-medium">Code Analysis:</h4>
+                                <div className="p-4 bg-muted/50 rounded-md">
+                                  <pre className="text-sm font-mono bg-background p-4 rounded-md overflow-x-auto">
+                                    {item.code}
+                                  </pre>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </TabsContent>
+
+            <TabsContent value="summary">
+              <Card className="p-6">
+                <div className="prose prose-sm max-w-none">
+                  {feedback.split('\n\n').map((paragraph, index) => {
       const isHeading = paragraph.startsWith('#') || 
                         (/^[A-Z][\w\s]+:$/.test(paragraph)) || 
                         paragraph.length < 50 && paragraph.toUpperCase() === paragraph;
@@ -143,164 +414,11 @@ const FeedbackPage: React.FC = () => {
           </p>
         );
       }
-    });
-  };
-  
-  return (
-    <div className="min-h-screen pt-24 pb-16 px-6">
-      <div className="max-w-4xl w-full mx-auto">
-        <Button
-          variant="outline"
-          className="mb-6"
-          onClick={handleNewInterview}
-          leftIcon={<ArrowLeft className="h-4 w-4" />}
-        >
-          Start New Data Interview
-        </Button>
-        
-        <div className="glass-card animate-fade-in">
-          <div className="flex flex-col md:flex-row md:items-center gap-4 mb-8">
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <BarChart4 className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-medium">Your {jobRole} Interview Feedback</h2>
-              <p className="text-muted-foreground">
-                Detailed analysis of your technical data interview performance
-              </p>
-            </div>
-            
-            {overallScore !== null && (
-              <div className="md:ml-auto p-4 rounded-lg bg-gradient-to-br from-primary/5 to-primary/20 border border-primary/10">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Overall Score</p>
-                  <div className="flex items-center justify-center gap-2">
-                    <p className={cn("text-3xl font-bold", getScoreColorClass(overallScore / 10))}>
-                      {overallScore}
-                    </p>
-                    <p className="text-sm text-muted-foreground">/100</p>
-                  </div>
-                  <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
-                    <div
-                      className={cn("h-2 rounded-full", getScoreBackgroundClass(overallScore / 10))}
-                      style={{ width: `${overallScore}%` }}
-                    ></div>
-                  </div>
+                  })}
                 </div>
-              </div>
-            )}
-          </div>
-          
-          {validEvaluations.length > 0 && questions.length > 0 && (
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <LineChart className="h-5 w-5 text-primary" />
-                <h3 className="font-medium">Question-by-Question Feedback</h3>
-              </div>
-              
-              <div className="overflow-hidden rounded-lg border border-gray-200">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">#</TableHead>
-                      <TableHead>Question</TableHead>
-                      <TableHead className="w-20 text-center">Score</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {questions.map((question, index) => {
-                      const evaluation = evaluations[index];
-                      const hasValidEvaluation = evaluation && typeof evaluation === 'object' && typeof evaluation.score === 'number';
-                      
-                      return (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{index + 1}</TableCell>
-                          <TableCell>
-                            <p className="font-medium text-sm">{question}</p>
-                            <div className="mt-2">
-                              <p className="text-xs text-muted-foreground mb-1">Your answer:</p>
-                              <p className="text-sm text-muted-foreground">{answers[index] || "No answer provided"}</p>
-                              
-                              {hasValidEvaluation && evaluation.feedback && (
-                                <div className="mt-3 p-3 bg-muted/50 rounded-md">
-                                  <p className="text-xs font-medium mb-1">Feedback:</p>
-                                  <div className="text-sm">
-                                    {evaluation.score >= 8 ? (
-                                      <div className="flex gap-2 items-start mb-1.5">
-                                        <Check className="h-4 w-4 text-green-600 mt-0.5" />
-                                        <p>
-                                          <span className="font-medium">Strengths:</span>{" "}
-                                          {evaluation.feedback.split('.')[0]}.
-                                        </p>
-                                      </div>
-                                    ) : (
-                                      <div className="flex gap-2 items-start mb-1.5">
-                                        <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5" />
-                                        <p>
-                                          <span className="font-medium">Areas for improvement:</span>{" "}
-                                          {evaluation.feedback}
-                                        </p>
-                                      </div>
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            {hasValidEvaluation ? (
-                              <div className="flex flex-col items-center">
-                                <span className={cn("font-medium", getScoreColorClass(evaluation.score))}>
-                                  {evaluation.score}/10
-                                </span>
-                                <div className="w-16 h-2 bg-gray-200 rounded-full mt-1.5">
-                                  <div
-                                    className={cn("h-2 rounded-full", getScoreBackgroundClass(evaluation.score))}
-                                    style={{ width: `${evaluation.score * 10}%` }}
-                                  ></div>
-                                </div>
-                              </div>
-                            ) : (
-                              "-"
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-              
-              <div className="mt-4 pt-3 border-t border-gray-200 flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Average Score</span>
-                <div className="flex items-center gap-2">
-                  <span className={cn("font-medium", getScoreColorClass(averageScore))}>
-                    {averageScore.toFixed(1)}/10
-                  </span>
-                  <div className="w-16 h-2 bg-gray-200 rounded-full">
-                    <div
-                      className={cn("h-2 rounded-full", getScoreBackgroundClass(averageScore))}
-                      style={{ width: `${averageScore * 10}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          <div className="space-y-6">
-            {renderFeedback()}
-          </div>
-          
-          <div className="mt-8 pt-6 border-t">
-            <Button 
-              variant="primary" 
-              fullWidth 
-              onClick={handleNewInterview}
-            >
-              Practice Another Data Interview
-            </Button>
-          </div>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </div>

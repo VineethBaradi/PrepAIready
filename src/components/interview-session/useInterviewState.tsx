@@ -1,4 +1,3 @@
-
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { evaluateAnswer } from '@/services/aiService';
@@ -102,6 +101,10 @@ export const useInterviewState = ({
     // Reset code input state for next question
     setShowCodeInput(false);
     setCodeInput("");
+    
+    // Reset the transcript for the next question
+    const currentQuestion = sessionStorage.getItem('currentQuestion') || '';
+    sessionStorage.setItem('currentQuestion', '');
     
     setCurrentQuestionIndex(prev => prev + 1);
   };

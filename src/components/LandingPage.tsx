@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Upload, FileText, Award, Database, Brain } from 'lucide-react';
+import { ArrowRight, Upload, FileText, Award, Database, Brain, Clipboard } from 'lucide-react';
 import Button from './Button';
 import FileUpload from './FileUpload';
 import { cn } from '@/lib/utils';
 import { getApiKey, dataRoles } from '@/services/aiService';
 import { toast } from '@/components/ui/use-toast';
+import { Textarea } from './ui/textarea';
 
 const features = [
   {
@@ -28,9 +28,27 @@ const features = [
 
 const LandingPage: React.FC = () => {
   const [resume, setResume] = useState<File | null>(null);
-  const [selectedRole, setSelectedRole] = useState<string>("");
-  const [customRole, setCustomRole] = useState<string>("");
-  const [isCustomRole, setIsCustomRole] = useState(false);
+  const [jobDescription, setJobDescription] = useState<string>(`Data Analyst Job Description:
+
+We are seeking a skilled Data Analyst to join our team. The ideal candidate will be responsible for:
+
+• Analyzing large datasets to identify trends, patterns, and insights
+• Creating data visualizations and reports to communicate findings
+• Working with SQL and data analysis tools to extract and manipulate data
+• Collaborating with stakeholders to understand business requirements
+• Developing and maintaining dashboards for key performance indicators
+• Ensuring data accuracy and integrity in all analyses
+• Presenting findings to both technical and non-technical audiences
+
+Requirements:
+• Strong analytical and problem-solving skills
+• Proficiency in SQL and data visualization tools
+• Experience with statistical analysis and data modeling
+• Excellent communication and presentation skills
+• Ability to work with cross-functional teams
+• Bachelor's degree in Data Science, Statistics, or related field
+
+This role offers the opportunity to work with cutting-edge data technologies and make a significant impact on business decisions.`);
   const navigate = useNavigate();
   
   const handleStartInterview = () => {
@@ -44,21 +62,20 @@ const LandingPage: React.FC = () => {
       return;
     }
     
-    // Store resume and job role in sessionStorage
+    // Store resume and job description in sessionStorage
     if (resume) {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target?.result as string;
         sessionStorage.setItem('resume', content);
-        sessionStorage.setItem('jobRole', isCustomRole ? customRole : selectedRole);
+        sessionStorage.setItem('jobDescription', jobDescription);
         navigate('/interview');
       };
       reader.readAsText(resume);
     }
   };
   
-  const jobRole = isCustomRole ? customRole : selectedRole;
-  const isReadyToStart = resume && jobRole;
+  const isReadyToStart = resume && jobDescription;
   
   return (
     <div className="min-h-screen pt-24 pb-16 px-6">
@@ -88,54 +105,22 @@ const LandingPage: React.FC = () => {
             
             <div>
               <label className="text-sm font-medium mb-2 block">
-                Select job role
+                Job Description
               </label>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                {dataRoles.map((role) => (
-                  <button
-                    key={role}
-                    className={cn(
-                      "p-3 text-sm border rounded-lg transition-all",
-                      selectedRole === role && !isCustomRole
-                        ? "border-primary bg-primary/5 font-medium"
-                        : "border-border hover:border-primary/50"
-                    )}
-                    onClick={() => {
-                      setSelectedRole(role);
-                      setIsCustomRole(false);
-                    }}
-                  >
-                    {role}
-                  </button>
-                ))}
-              </div>
-              
-              <div className="flex items-center mb-2">
-                <input
-                  id="custom-role"
-                  type="checkbox"
-                  checked={isCustomRole}
-                  onChange={() => setIsCustomRole(!isCustomRole)}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              <div className="relative">
+                <Textarea
+                  value={jobDescription}
+                  onChange={(e) => setJobDescription(e.target.value)}
+                  placeholder="Paste the job description you're preparing for..."
+                  className="min-h-[150px] resize-none"
                 />
-                <label
-                  htmlFor="custom-role"
-                  className="ml-2 block text-sm"
-                >
-                  Other job role (specify)
-                </label>
+                <div className="absolute top-2 right-2 text-muted-foreground">
+                  <Clipboard className="h-4 w-4" />
+                </div>
               </div>
-              
-              {isCustomRole && (
-                <input
-                  type="text"
-                  value={customRole}
-                  onChange={(e) => setCustomRole(e.target.value)}
-                  placeholder="Enter specific job role (e.g., Frontend Developer)"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                />
-              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                The job description helps us generate more relevant interview questions
+              </p>
             </div>
             
             <Button

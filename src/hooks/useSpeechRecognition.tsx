@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 
 interface UseSpeechRecognitionProps {
@@ -12,6 +11,7 @@ interface UseSpeechRecognitionReturn {
   startRecording: () => void;
   stopRecording: () => void;
   resetTranscript: () => void;
+  setTranscript: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export function useSpeechRecognition({ 
@@ -21,6 +21,18 @@ export function useSpeechRecognition({
   const [isRecording, setIsRecording] = useState(false);
   const [recognitionActive, setRecognitionActive] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const lastFinalTranscriptRef = useRef<string>("");
+  const currentQuestionRef = useRef<string>("");
+  
+  useEffect(() => {
+    // Check if the question has changed
+    const currentQuestion = sessionStorage.getItem('currentQuestion') || '';
+    if (currentQuestion !== currentQuestionRef.current) {
+      // Question has changed, reset the transcript
+      resetTranscript();
+      currentQuestionRef.current = currentQuestion;
+    }
+  }, [sessionStorage.getItem('currentQuestion')]);
   
   useEffect(() => {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
@@ -43,10 +55,21 @@ export function useSpeechRecognition({
             }
           }
           
-          const newTranscript = finalTranscript || interimTranscript || transcript;
-          setTranscript(newTranscript);
-          if (onTranscriptChange) {
-            onTranscriptChange(newTranscript);
+          // Only update the transcript if we have new final results
+          if (finalTranscript) {
+            const newTranscript = lastFinalTranscriptRef.current + finalTranscript;
+            lastFinalTranscriptRef.current = newTranscript;
+            setTranscript(newTranscript);
+            if (onTranscriptChange) {
+              onTranscriptChange(newTranscript);
+            }
+          } else if (interimTranscript) {
+            // Show interim results with the last final transcript
+            const newTranscript = lastFinalTranscriptRef.current + interimTranscript;
+            setTranscript(newTranscript);
+            if (onTranscriptChange) {
+              onTranscriptChange(newTranscript);
+            }
           }
         };
         
@@ -95,6 +118,7 @@ export function useSpeechRecognition({
   
   const resetTranscript = () => {
     setTranscript("");
+    lastFinalTranscriptRef.current = "";
   };
 
   return {
@@ -103,6 +127,7 @@ export function useSpeechRecognition({
     recognitionActive,
     startRecording,
     stopRecording,
-    resetTranscript
+    resetTranscript,
+    setTranscript
   };
 }

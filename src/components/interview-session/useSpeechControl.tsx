@@ -1,4 +1,3 @@
-
 import { useRef } from 'react';
 import { useSpeechRecognition } from '@/hooks/useSpeechRecognition';
 import { useSpeechSynthesis } from '@/hooks/useSpeechSynthesis';
@@ -24,6 +23,7 @@ interface UseSpeechControlReturn {
   handleStartRecording: () => void;
   handleStopRecording: () => void;
   readQuestion: (text: string) => void;
+  setTranscript: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const waitingMessages = [
@@ -42,7 +42,7 @@ export const useSpeechControl = ({
   setIsWaiting,
   setWaitingMessage
 }: UseSpeechControlProps): UseSpeechControlReturn => {
-  const { transcript, isRecording, startRecording: startSpeechRecognition, stopRecording: stopSpeechRecognition } = useSpeechRecognition({});
+  const { transcript, isRecording, startRecording: startSpeechRecognition, stopRecording: stopSpeechRecognition, setTranscript } = useSpeechRecognition({});
   const { isSpeaking, isMuted, readAloud, stopSpeech, toggleMute: toggleSpeechMute } = useSpeechSynthesis();
   const lastReadQuestionRef = useRef<string>('');
   
@@ -102,6 +102,7 @@ export const useSpeechControl = ({
     toggleRecording,
     handleStartRecording,
     handleStopRecording,
-    readQuestion
+    readQuestion,
+    setTranscript
   };
 };

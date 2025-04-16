@@ -1,23 +1,27 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generateInterviewQuestions } from '@/services/aiService';
 import { toast } from '@/components/ui/use-toast';
 
+interface Evaluation {
+  score: number;
+  feedback: string;
+}
+
 interface UseInterviewQuestionsReturn {
   questions: string[];
   answers: string[];
-  evaluations: Array<{score: number; feedback: string}>;
+  evaluations: Evaluation[];
   isLoading: boolean;
   usingFallbackQuestions: boolean;
   setAnswers: React.Dispatch<React.SetStateAction<string[]>>;
-  setEvaluations: React.Dispatch<React.SetStateAction<Array<{score: number; feedback: string}>>>;
+  setEvaluations: React.Dispatch<React.SetStateAction<Evaluation[]>>;
 }
 
 export const useInterviewQuestions = (): UseInterviewQuestionsReturn => {
   const [questions, setQuestions] = useState<string[]>([]);
   const [answers, setAnswers] = useState<string[]>([]);
-  const [evaluations, setEvaluations] = useState<Array<{score: number; feedback: string}>>([]);
+  const [evaluations, setEvaluations] = useState<Evaluation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [usingFallbackQuestions, setUsingFallbackQuestions] = useState(false);
   
@@ -25,13 +29,15 @@ export const useInterviewQuestions = (): UseInterviewQuestionsReturn => {
   
   useEffect(() => {
     const fetchQuestions = async () => {
-      const resumeContent = sessionStorage.getItem('resume');
-      const jobRole = sessionStorage.getItem('jobRole');
+      const [resumeContent, jobDescription] = [
+        sessionStorage.getItem('resume'),
+        sessionStorage.getItem('jobDescription')
+      ];
       
-      if (!resumeContent || !jobRole) {
+      if (!resumeContent || !jobDescription) {
         toast({
           title: "Missing information",
-          description: "Please upload a resume and select a job role first.",
+          description: "Please upload a resume and provide a job description first.",
           variant: "destructive",
         });
         navigate('/');
@@ -41,13 +47,15 @@ export const useInterviewQuestions = (): UseInterviewQuestionsReturn => {
       try {
         const generatedQuestions = await generateInterviewQuestions({
           resume: resumeContent,
-          jobRole: jobRole,
-          count: 8
+          jobDescription,
+          count: Math.floor(Math.random() * (15 - 12 + 1)) + 12
         });
         
+        const emptyEvaluation: Evaluation = { score: 0, feedback: '' };
+        
         setQuestions(generatedQuestions);
-        setAnswers(new Array(generatedQuestions.length).fill(''));
-        setEvaluations(new Array(generatedQuestions.length).fill({ score: 0, feedback: '' }));
+        setAnswers(Array(generatedQuestions.length).fill(''));
+        setEvaluations(Array(generatedQuestions.length).fill(emptyEvaluation));
       } catch (error) {
         console.error("Failed to generate questions:", error);
         setUsingFallbackQuestions(true);

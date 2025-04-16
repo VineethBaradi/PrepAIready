@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, Brain, Sparkles } from 'lucide-react';
 import Button from './Button';
 import { cn } from '@/lib/utils';
 
@@ -23,7 +22,7 @@ const Header: React.FC = () => {
   
   const navItems = [
     { name: 'Home', path: '/' },
-    { name: 'Practice', path: '/interview' },
+    { name: 'Interview', path: '/interview' },
     { name: 'Feedback', path: '/feedback' },
   ];
   
@@ -35,8 +34,20 @@ const Header: React.FC = () => {
       )}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold tracking-tight">PrepAIready</span>
+        <Link to="/" className="flex items-center space-x-3 group">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/10 rounded-full blur opacity-70 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+            <div className="relative flex items-center justify-center h-10 w-10 rounded-full bg-primary/10">
+              <Brain className="h-5 w-5 text-primary" />
+              <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-primary animate-pulse" />
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80">
+              PrepAIready
+            </span>
+            <span className="text-[10px] text-muted-foreground tracking-wider">AI Interview Prep</span>
+          </div>
         </Link>
         
         <nav className="hidden md:flex items-center space-x-8">

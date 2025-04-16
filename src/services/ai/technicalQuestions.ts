@@ -1,4 +1,3 @@
-
 // This file now only handles the API interface for generating questions with AI
 // There are no hardcoded questions anymore - everything is AI-generated
 
@@ -13,7 +12,7 @@ async function generateGenericQuestionsFromAI(jobRole: string): Promise<string[]
   try {
     // This is a placeholder for the actual AI question generation
     // In a real implementation, this would call the AI service directly
-    const genericPrompt = `Generate 8 interview questions for a ${jobRole} position. 
+    const genericPrompt = `Generate 12-15 interview questions for a ${jobRole} position. 
     Include a mix of technical questions, behavioral questions, and scenario-based questions.`;
     
     // This would normally be an API call to an AI service
@@ -29,7 +28,14 @@ async function generateGenericQuestionsFromAI(jobRole: string): Promise<string[]
       `Describe a situation where you had to solve a complex problem in your previous role.`,
       `How do you approach working with a team on a new project?`,
       `What interests you most about this ${jobRole} position?`,
-      `Where do you see the industry heading in the next 5 years?`
+      `Where do you see the industry heading in the next 5 years?`,
+      `Tell me about a time when you had to learn a new technology quickly.`,
+      `How do you handle tight deadlines and pressure?`,
+      `What's your approach to debugging complex issues?`,
+      `How do you ensure the quality of your work?`,
+      `Describe a situation where you had to deal with a difficult stakeholder.`,
+      `What's your experience with agile methodologies?`,
+      `How do you stay organized when handling multiple tasks?`
     ];
   } catch (error) {
     console.error("Error generating questions from AI:", error);
@@ -40,7 +46,14 @@ async function generateGenericQuestionsFromAI(jobRole: string): Promise<string[]
       `What's your greatest professional achievement?`,
       `What challenges have you faced in your career?`,
       `Where do you see yourself in 5 years?`,
-      `Why are you interested in this position?`
+      `Why are you interested in this position?`,
+      `How do you handle difficult situations at work?`,
+      `What's your approach to problem-solving?`,
+      `How do you stay current with industry trends?`,
+      `Tell me about a project you're proud of.`,
+      `How do you handle feedback?`,
+      `What's your experience with team collaboration?`,
+      `How do you prioritize your work?`
     ];
   }
 }
