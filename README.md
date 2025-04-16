@@ -45,7 +45,7 @@ npm run dev
 ```
 
 4. **Access the Application**
-Open your browser and navigate to `http://localhost:5173`
+Open your browser and navigate to `http://localhost:****`
 
 ## Project Structure
 ```
@@ -74,10 +74,10 @@ PrepAIready/
 3. **Feedback Page**: Review your performance and improvement suggestions
 
 ## Academic Contributions
-This project demonstrates the practical application of AI in:
-- Natural Language Processing for question generation
-- Machine Learning for response analysis
-- Computer Vision for video interview assessment
+This project demonstrates the practical application of AI by using Deepseek API for its cost effectiveness. 
+- for question generation
+- for response analysis
+- for video interview assessment
 - AI-driven decision making for performance evaluation
 
 ## Development Notes
@@ -89,6 +89,6 @@ This project demonstrates the practical application of AI in:
 This project is part of academic coursework and is intended for educational purposes.
 
 ## Acknowledgments
-- Course Instructors
-- AI Development Team
-- Open Source Community
+- Caitlin Syder AI Professor at UDM
+- Dr. Ray ( Founder of ADA Analytics)
+
