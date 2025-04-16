@@ -1,69 +1,94 @@
-# Welcome to your Lovable project
+# PrepAIready - AI-Powered Interview Preparation Platform
 
-## Project info
+## Academic Project Overview
+This project is developed as part of the Artificial Intelligence course work, demonstrating the practical application of AI technologies in creating an intelligent interview preparation platform. The project showcases the integration of various AI components to provide a comprehensive interview preparation experience.
 
-**URL**: https://lovable.dev/projects/f62ed366-ba2a-4f83-8bac-d4e24cedd132
+## Project Description
+PrepAIready is an innovative interview preparation platform that leverages artificial intelligence to provide personalized interview experiences. The platform simulates real interview scenarios, offering both technical and behavioral question sessions, with AI-powered feedback and scoring.
 
-## How can I edit this code?
+### Key Features
+- **AI-Powered Question Generation**: Dynamically generates relevant interview questions based on job descriptions and candidate profiles
+- **Real-time Interview Simulation**: Interactive interview sessions with voice and video capabilities
+- **Intelligent Feedback System**: AI-driven analysis of responses with detailed scoring and improvement suggestions
+- **Code Assessment**: Technical interview mode with code evaluation and feedback
+- **Comprehensive Feedback**: Detailed analysis of performance across multiple parameters
 
-There are several ways of editing your application.
+## Technology Stack
+- **Frontend**: React, TypeScript, Vite
+- **UI Components**: shadcn-ui, Tailwind CSS
+- **AI Integration**: Custom AI services for question generation and response analysis
+- **Development Tools**: Cursor AI (through Vibe Coding)
 
-**Use Lovable**
+## Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/f62ed366-ba2a-4f83-8bac-d4e24cedd132) and start prompting.
+### Prerequisites
+- Node.js (v16 or higher)
+- npm (v7 or higher)
+- Git
 
-Changes made via Lovable will be committed automatically to this repo.
+### Installation Steps
 
-**Use your preferred IDE**
+1. **Clone the Repository**
+```bash
+git clone https://github.com/VineethBaradi/PrepAIready.git
+cd PrepAIready
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. **Install Dependencies**
+```bash
+npm install
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. **Start the Development Server**
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+4. **Access the Application**
+Open your browser and navigate to `http://localhost:5173`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Project Structure
+```
+PrepAIready/
+├── src/
+│   ├── components/     # React components
+│   ├── services/       # AI and other services
+│   ├── types/          # TypeScript type definitions
+│   └── utils/          # Utility functions
+├── public/             # Static assets
+└── package.json        # Project dependencies
+```
 
-**Use GitHub Codespaces**
+## AI Components
+1. **Question Generator**: Generates context-aware interview questions
+2. **Response Analyzer**: Evaluates candidate responses using AI
+3. **Code Evaluator**: Analyzes code submissions and provides feedback
+4. **Feedback Generator**: Creates comprehensive performance reports
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Usage Guide
+1. **Landing Page**: Upload your resume and enter job details
+2. **Interview Session**: 
+   - Choose between technical and behavioral interviews
+   - Respond to AI-generated questions
+   - Submit code solutions for technical questions
+3. **Feedback Page**: Review your performance and improvement suggestions
 
-## What technologies are used for this project?
+## Academic Contributions
+This project demonstrates the practical application of AI in:
+- Natural Language Processing for question generation
+- Machine Learning for response analysis
+- Computer Vision for video interview assessment
+- AI-driven decision making for performance evaluation
 
-This project is built with .
+## Development Notes
+- Built using Cursor AI through Vibe Coding
+- Implements modern AI practices and patterns
+- Follows best practices for AI integration in web applications
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## License
+This project is part of academic coursework and is intended for educational purposes.
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/f62ed366-ba2a-4f83-8bac-d4e24cedd132) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## Acknowledgments
+- Course Instructors
+- AI Development Team
+- Open Source Community
